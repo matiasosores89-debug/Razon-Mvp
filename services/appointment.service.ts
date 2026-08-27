@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { AppointmentSchema } from "@/lib/validations";
 import { CustomerService } from "./customer.service";
 import { Prisma } from "@prisma/client";
-import { getShopDayBounds, shopDateTime } from "@/lib/datetime";
+import { getShopDateString, getShopDayBounds, shopDateTime } from "@/lib/datetime";
 
 export const AppointmentService = {
   /**
@@ -174,14 +174,13 @@ export const AppointmentService = {
    */
   async getAdminStats() {
     const now = new Date();
-    const startOfToday = new Date(now.setHours(0, 0, 0, 0));
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const { start: startOfToday, end: endOfToday } = getShopDayBounds(getShopDateString(now));
 
-    const [total, today, completedAppointments] = await Promise.all([
+    const [total, today, completedAppointments, activeBarbers, offeredServices] = await Promise.all([
       prisma.appointment.count(),
       prisma.appointment.count({
         where: {
-          startTime: { gte: startOfToday },
+          startTime: { gte: startOfToday, lte: endOfToday },
           status: { not: "CANCELLED" },
         },
       }),
@@ -189,6 +188,8 @@ export const AppointmentService = {
         where: { status: "COMPLETED" },
         include: { service: true },
       }),
+      prisma.barber.count(),
+      prisma.service.count(),
     ]);
 
     const totalRevenue = completedAppointments.reduce(
@@ -197,12 +198,12 @@ export const AppointmentService = {
     );
 
     // Activity for last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgo = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000);
+    const { start: activityStart } = getShopDayBounds(getShopDateString(thirtyDaysAgo));
 
     const appointments = await prisma.appointment.findMany({
       where: {
-        startTime: { gte: thirtyDaysAgo },
+        startTime: { gte: activityStart },
         status: { not: "CANCELLED" },
       },
       select: { startTime: true },
@@ -210,7 +211,7 @@ export const AppointmentService = {
 
     const activityMap: Record<string, number> = {};
     appointments.forEach(app => {
-      const date = app.startTime.toISOString().split('T')[0];
+      const date = getShopDateString(app.startTime);
       activityMap[date] = (activityMap[date] || 0) + 1;
     });
 
@@ -224,6 +225,8 @@ export const AppointmentService = {
         todayAppointments: today,
         totalRevenue,
         completionRate: total > 0 ? (completedAppointments.length / total) * 100 : 0,
+        activeBarbers,
+        offeredServices,
       },
       activity,
     };

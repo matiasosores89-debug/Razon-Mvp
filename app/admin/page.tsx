@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { TrendingUp, Calendar, DollarSign, CheckCircle, Clock } from "lucide-react";
+import { getShopDateString } from "@/lib/datetime";
 
 interface Stats {
   summary: {
@@ -9,6 +10,8 @@ interface Stats {
     todayAppointments: number;
     totalRevenue: number;
     completionRate: number;
+    activeBarbers: number;
+    offeredServices: number;
   };
   activity: { date: string; count: number }[];
 }
@@ -38,7 +41,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch("/api/admin/stats");
+        const res = await fetch("/api/admin/stats", { cache: "no-store" });
         const result = await res.json();
         if (result.success) setStats(result.data);
       } catch (e) {
@@ -70,7 +73,7 @@ export default function AdminDashboard() {
   const last30Days = Array.from({ length: 30 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (29 - i));
-    return d.toISOString().split('T')[0];
+    return getShopDateString(d);
   });
 
   const fullActivity = last30Days.map(date => {
@@ -169,11 +172,11 @@ export default function AdminDashboard() {
             </div>
             <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl">
               <span className="text-muted-foreground text-sm">Barberos Activos</span>
-              <span className="text-white text-sm font-bold">4</span>
+              <span className="text-white text-sm font-bold">{stats.summary.activeBarbers}</span>
             </div>
             <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl">
               <span className="text-muted-foreground text-sm">Servicios Ofrecidos</span>
-              <span className="text-white text-sm font-bold">2</span>
+              <span className="text-white text-sm font-bold">{stats.summary.offeredServices}</span>
             </div>
             <div className="mt-8">
               <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl text-center">
