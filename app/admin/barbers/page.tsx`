@@ -1,0 +1,360 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import {
+  Scissors,
+  User,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  X,
+  Loader2,
+  TrendingUp,
+  Filter
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface Barber {
+  id: string;
+  name: string;
+  specialty: string;
+  experience: number;
+  completedToday: number;
+}
+
+interface BarberDetails {
+  barber: Barber;
+  history: any[];
+  statsByDay: Record<string, number>;
+  totalCompleted: number;
+  totalAppointments: number;
+  filterActive?: boolean;
+  period?: { month: number; year: number };
+}
+
+export default function BarbersPage() {
+  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedBarberId, setSelectedBarberId] = useState<string | null>(null);
+  const [details, setDetails] = useState<BarberDetails | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  // Filter state
+  const [filterMonth, setFilterMonth] = useState<string>("");
+  const [filterYear, setFilterYear] = useState<string>(new Date().getFullYear().toString());
+
+  useEffect(() => {
+    fetchBarbers();
+  }, []);
+
+  async function fetchBarbers() {
+    try {
+      setIsLoading(true);
+      const res = await fetch("/api/admin/barbers");
+      const result = await res.json();
+      if (result.success) {
+        setBarbers(result.data);
+      }
+    } catch (error) {
+      console.error("Error fetching barbers:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function fetchBarberDetails(id: string, month?: number, year?: number) {
+    try {
+      setIsLoadingDetails(true);
+      let url = `/api/admin/barbers/${id}`;
+      if (month && year) {
+        url += `?month=${month}&year=${year}`;
+      }
+      const res = await fetch(url);
+      const result = await res.json();
+      if (result.success) {
+        setDetails(result.data);
+      }
+    } catch (error) {
+      console.error("Error fetching barber details:", error);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  }
+
+  const handleBarberClick = async (id: string) => {
+    setSelectedBarberId(id);
+    await fetchBarberDetails(id);
+  };
+
+  const handleApplyFilter = async () => {
+    if (!selectedBarberId) return;
+    const month = parseInt(filterMonth);
+    const year = parseInt(filterYear);
+    if (!isNaN(month) && !isNaN(year)) {
+      await fetchBarberDetails(selectedBarberId, month, year);
+    }
+  };
+
+  const closeModal = () => {
+    setSelectedBarberId(null);
+    setDetails(null);
+    setFilterMonth("");
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Equipo de Barberos</h1>
+          <p className="text-muted-foreground">Gestiona tu equipo y monitorea el rendimiento diario.</p>
+        </div>
+      </div>
+
+      <div className="bg-luxury-grey border border-white/10 rounded-3xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-white/5 text-muted-foreground text-xs uppercase tracking-wider font-semibold">
+              <tr>
+                <th className="px-6 py-4">Barbero</th>
+                <th className="px-6 py-4">Especialidad</th>
+                <th className="px-6 py-4 text-center">Turnos Hoy</th>
+                <th className="px-6 py-4 text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="animate-spin text-primary" size={32} />
+                      <p>Cargando barberos...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : barbers.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                    No hay barberos registrados.
+                  </td>
+                </tr>
+              ) : (
+                barbers.map((barber) => (
+                  <tr
+                    key={barber.id}
+                    className="hover:bg-white/5 transition-colors group cursor-pointer"
+                    onClick={() => handleBarberClick(barber.id)}
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+                          {barber.name.charAt(0)}
+                        </div>
+                        <span className="text-white font-medium">{barber.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-muted-foreground">{barber.specialty}</td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-sm font-bold">
+                        {barber.completedToday}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-muted-foreground group-hover:text-primary transition-colors text-sm font-medium">
+                        Ver Detalles
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Detail Modal */}
+      {selectedBarberId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-luxury-grey border border-white/10 w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[95vh] my-auto animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-8 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-luxury-black font-bold text-xl">
+                  {details?.barber.name.charAt(0) || "?"}
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white">{details?.barber.name || "Cargando..."}</h3>
+                  <p className="text-muted-foreground">{details?.barber.specialty}</p>
+                </div>
+              </div>
+              <button
+                onClick={closeModal}
+                className="p-2 rounded-xl hover:bg-white/5 text-muted-foreground transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="px-8 pb-8 overflow-y-auto">
+              {isLoadingDetails ? (
+                <div className="py-12 flex flex-col items-center gap-2 text-muted-foreground">
+                  <Loader2 className="animate-spin text-primary" size={32} />
+                  <p>Obteniendo estadísticas...</p>
+                </div>
+              ) : details ? (
+                <div className="space-y-8">
+                  {/* Month Filter */}
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2 text-white font-medium text-sm">
+                      <Filter size={16} className="text-primary" />
+                      Filtro de Cobro Mensual
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={filterMonth}
+                        onChange={(e) => setFilterMonth(e.target.value)}
+                        className="bg-white/5 border border-white/10 text-white p-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Mes</option>
+                        {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].map((m, i) => (
+                          <option key={m} value={i + 1}>{m}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={filterYear}
+                        onChange={(e) => setFilterYear(e.target.value)}
+                        className="bg-white/5 border border-white/10 text-white p-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value={filterYear}>{filterYear}</option>
+                        <option value={parseInt(filterYear) - 1}>{parseInt(filterYear) - 1}</option>
+                        <option value={parseInt(filterYear) + 1}>{parseInt(filterYear) + 1}</option>
+                      </select>
+                      <button
+                        onClick={handleApplyFilter}
+                        className="bg-primary text-luxury-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors"
+                      >
+                        Filtrar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                      <div className="flex items-center gap-3 text-muted-foreground mb-2">
+                        <Calendar size={18} />
+                        <span className="text-xs font-medium uppercase tracking-wider">
+                          {details.filterActive ? "Turnos del Mes" : "Total Turnos (30d)"}
+                        </span>
+                      </div>
+                      <div className="text-2xl font-bold text-white">{details.totalAppointments}</div>
+                    </div>
+                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                      <div className="flex items-center gap-3 text-green-500 mb-2">
+                        <CheckCircle2 size={18} />
+                        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Completados</span>
+                      </div>
+                      <div className="text-2xl font-bold text-white">{details.totalCompleted}</div>
+                    </div>
+                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                      <div className="flex items-center gap-3 text-primary mb-2">
+                        <TrendingUp size={18} />
+                        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Eficiencia</span>
+                      </div>
+                      <div className="text-2xl font-bold text-white">
+                        {details.totalAppointments > 0
+                          ? Math.round((details.totalCompleted / details.totalAppointments) * 100)
+                          : 0}%
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Activity Trend */}
+                  {!details.filterActive && (
+                    <div>
+                      <h4 className="text-white font-medium mb-4 flex items-center gap-2">
+                        <Clock size={18} className="text-primary" />
+                        Actividad Reciente (Días)
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(details.statsByDay)
+                          .sort((a, b) => b[0].localeCompare(a[0]))
+                          .map(([date, count]) => (
+                            <div key={date} className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-xs">
+                              <span className="text-muted-foreground mr-2">{date}</span>
+                              <span className="text-white font-bold">{count}</span>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cut History */}
+                  <div className="space-y-4">
+                    <h4 className="text-white font-medium flex items-center gap-2">
+                      <Scissors size={18} className="text-primary" />
+                      {details.filterActive
+                        ? `Cortes Completados en ${details.period?.month} / ${details.period?.year}`
+                        : "Historia de Cortes"}
+                    </h4>
+                    <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="bg-white/10 text-muted-foreground text-[10px] uppercase tracking-wider font-semibold">
+                          <tr>
+                            <th className="px-4 py-3">Cliente</th>
+                            <th className="px-4 py-3">Servicio</th>
+                            <th className="px-4 py-3">Fecha</th>
+                            <th className="px-4 py-3">Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {details.history.length === 0 ? (
+                            <tr>
+                              <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground text-sm">
+                                Sin turnos registrados en este periodo.
+                              </td>
+                            </tr>
+                          ) : (
+                            details.history.map((app, idx) => (
+                              <tr
+                                key={idx}
+                                className={cn(
+                                  "hover:bg-white/5 transition-colors",
+                                  details.filterActive && app.status !== 'COMPLETED' && "opacity-40"
+                                )}
+                              >
+                                <td className="px-4 py-3 text-sm text-white">{app.customer?.name}</td>
+                                <td className="px-4 py-3 text-sm text-muted-foreground">{app.service?.title}</td>
+                                <td className="px-4 py-3 text-sm text-muted-foreground">
+                                  {new Date(app.startTime).toLocaleDateString()}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={cn(
+                                    "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border",
+                                    app.status === 'COMPLETED' && "bg-green-500/10 text-green-500 border-green-500/20",
+                                    app.status === 'SCHEDULED' && "bg-amber-500/10 text-amber-500 border-amber-500/20",
+                                    app.status === 'CANCELLED' && "bg-red-500/10 text-red-500 border-red-500/20",
+                                    app.status === 'NO_SHOW' && "bg-zinc-500/10 text-zinc-500 border-zinc-500/20",
+                                  )}>
+                                    {app.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-12 text-center text-muted-foreground">
+                  No se encontraron detalles.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
