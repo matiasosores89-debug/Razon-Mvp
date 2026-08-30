@@ -23,27 +23,27 @@ export const BarberSelector = ({ barbers, selectedBarberId, onSelect, isLoading 
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 md:grid-cols-4">
       {barbers.map((barber) => (
         <motion.div
           key={barber.id}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onSelect(barber.id)}
-          className={`cursor-pointer relative p-6 rounded-2xl border-2 transition-all duration-300 group ${
+          className={`group relative cursor-pointer rounded-2xl border-2 p-4 transition-all duration-300 sm:p-6 ${
             selectedBarberId === barber.id
               ? "border-primary bg-primary/10"
               : "border-white/10 bg-white/5 hover:border-white/20"
           }`}
         >
           {selectedBarberId === barber.id && (
-            <div className="absolute top-4 right-4 bg-primary text-luxury-black rounded-full p-1">
+            <div className="absolute right-3 top-3 rounded-full bg-primary p-1 text-luxury-black sm:right-4 sm:top-4">
               <Check size={16} className="font-bold" />
             </div>
           )}
 
-          <div className="flex flex-col items-center text-center">
-            <div className="w-24 h-24 rounded-full overflow-hidden mb-4 ring-2 ring-primary/30 group-hover:ring-primary transition-all">
+          <div className="flex items-center gap-4 text-left sm:flex-col sm:text-center">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full ring-2 ring-primary/30 transition-all group-hover:ring-primary sm:mb-4 sm:h-24 sm:w-24">
               <img
                 src={barber.image}
                 alt={barber.name}
@@ -53,10 +53,12 @@ export const BarberSelector = ({ barbers, selectedBarberId, onSelect, isLoading 
                 }}
               />
             </div>
-            <h3 className="text-xl font-bold text-white mb-1">{barber.name}</h3>
-            <p className="text-muted-foreground text-sm mb-4">{barber.specialty}</p>
-            <div className="text-primary text-xs font-medium uppercase tracking-wider">
+            <div className="min-w-0 pr-8 sm:pr-0">
+            <h3 className="mb-1 text-base font-bold text-white sm:text-xl">{barber.name}</h3>
+            <p className="mb-2 text-sm text-muted-foreground sm:mb-4">{barber.specialty}</p>
+            <div className="text-[11px] font-medium uppercase tracking-wider text-primary sm:text-xs">
               {barber.experience} años de experiencia
+            </div>
             </div>
           </div>
         </motion.div>

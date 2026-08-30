@@ -23,6 +23,7 @@ export const CustomerForm = ({ formData, onChange, errors }: CustomerFormProps) 
         <div className="relative">
           <input
             type="text"
+            autoComplete="name"
             value={formData.name}
             onChange={(e) => onChange("name", e.target.value)}
             placeholder="Ej: Juan Pérez"
@@ -39,6 +40,8 @@ export const CustomerForm = ({ formData, onChange, errors }: CustomerFormProps) 
         <div className="relative">
           <input
             type="tel"
+            autoComplete="tel"
+            inputMode="tel"
             value={formData.phone}
             onChange={(e) => onChange("phone", e.target.value)}
             placeholder="Ej: 381 1234567"
@@ -55,6 +58,8 @@ export const CustomerForm = ({ formData, onChange, errors }: CustomerFormProps) 
         <div className="relative">
           <input
             type="email"
+            autoComplete="email"
+            inputMode="email"
             value={formData.email}
             onChange={(e) => onChange("email", e.target.value)}
             placeholder="ejemplo@correo.com"

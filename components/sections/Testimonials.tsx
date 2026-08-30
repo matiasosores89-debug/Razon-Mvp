@@ -31,8 +31,8 @@ const testimonials: Testimonial[] = [
 
 export const Testimonials = () => {
   return (
-    <section id="testimonials" className="py-24 bg-luxury-dark relative">
-      <div className="container mx-auto px-6">
+    <section id="testimonials" className="relative bg-luxury-dark py-16 sm:py-20 md:py-24">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -41,13 +41,13 @@ export const Testimonials = () => {
             transition={{ duration: 0.6 }}
           >
             <span className="text-primary font-semibold tracking-widest uppercase text-sm">Opiniones</span>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mt-4 tracking-tight">
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
               Lo cuentan quienes ya vinieron
             </h2>
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3 md:gap-8">
           {testimonials.map((item, index) => (
             <motion.div
               key={item.id}

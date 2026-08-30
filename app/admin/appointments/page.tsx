@@ -391,9 +391,9 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
-      <div className="bg-luxury-grey border border-white/10 rounded-3xl overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-luxury-grey md:rounded-3xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="mobile-card-table appointments-table w-full border-collapse text-left">
             <thead className="bg-white/5 text-muted-foreground text-xs uppercase tracking-wider font-semibold">
               <tr>
                 <th className="px-6 py-4">Cliente</th>
@@ -528,7 +528,7 @@ export default function AppointmentsPage() {
 
       {isModalOpen && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md sm:p-6"
+          className="fixed inset-0 z-[100] flex items-end justify-center overflow-y-auto bg-black/75 p-0 backdrop-blur-md sm:items-center sm:p-6"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setIsModalOpen(false);
           }}
@@ -537,9 +537,9 @@ export default function AppointmentsPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="appointment-modal-title"
-            className="my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#191919] shadow-[0_32px_90px_rgba(0,0,0,0.65)] sm:max-h-[calc(100dvh-3rem)]"
+            className="flex max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-[#191919] shadow-[0_32px_90px_rgba(0,0,0,0.65)] sm:my-auto sm:max-h-[calc(100dvh-3rem)] sm:rounded-2xl"
           >
-            <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-6 py-5 sm:px-7">
+            <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-4 sm:px-7 sm:py-5">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
                   <CalendarClock size={19} />
@@ -564,7 +564,7 @@ export default function AppointmentsPage() {
             </header>
 
             <form onSubmit={(e) => { e.preventDefault(); handleSaveAppointment(); }} className="flex min-h-0 flex-1 flex-col">
-              <div className="grid min-h-0 flex-1 grid-cols-1 gap-x-5 gap-y-4 overflow-y-auto px-6 py-5 sm:grid-cols-2 sm:px-7">
+              <div className="grid min-h-0 flex-1 grid-cols-1 gap-x-5 gap-y-4 overflow-y-auto px-4 py-5 sm:grid-cols-2 sm:px-7">
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-zinc-400">Cliente</label>
                   <div className="relative">
@@ -681,7 +681,7 @@ export default function AppointmentsPage() {
                 </div>
 
               </div>
-              <footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-white/10 bg-black/10 px-6 py-4 sm:flex-row sm:justify-end sm:px-7">
+              <footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-white/10 bg-black/10 px-4 py-4 sm:flex-row sm:justify-end sm:px-7">
                 <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} className="h-10 px-4 text-zinc-300 hover:bg-white/5 hover:text-white">
                   Cancelar
                 </Button>

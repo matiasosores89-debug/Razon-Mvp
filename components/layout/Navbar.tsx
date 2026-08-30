@@ -31,6 +31,24 @@ export const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [pathname]);
 
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isOpen]);
+
   if (pathname.startsWith("/admin")) {
     return null;
   }
@@ -44,7 +62,7 @@ export const Navbar = () => {
           : "bg-transparent border-transparent py-5"
       )}
     >
-      <div className="container mx-auto px-6 flex items-center justify-between">
+      <div className="container mx-auto flex items-center justify-between px-4 sm:px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           <div className="p-2 bg-primary rounded-lg text-primary-foreground group-hover:scale-110 transition-transform">
@@ -74,7 +92,7 @@ export const Navbar = () => {
         {/* Mobile Toggle */}
         <button
           type="button"
-          className="md:hidden text-white p-2"
+          className="-mr-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 text-white md:hidden"
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
           aria-controls="mobile-navigation"
@@ -88,16 +106,16 @@ export const Navbar = () => {
       <div
         id="mobile-navigation"
         className={cn(
-          "absolute top-full left-0 right-0 bg-luxury-black border-b border-border transition-all duration-300 overflow-hidden",
-          isOpen ? "max-h-screen opacity-100 py-6" : "max-h-0 opacity-0"
+          "absolute left-0 right-0 top-full overflow-hidden border-b border-border bg-luxury-black transition-all duration-300 md:hidden",
+          isOpen ? "max-h-[calc(100dvh-64px)] overflow-y-auto py-5 opacity-100" : "max-h-0 opacity-0"
         )}
       >
-        <div className="container mx-auto px-6 flex flex-col gap-4">
+        <div className="container mx-auto flex flex-col gap-2 px-4 sm:px-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-lg font-medium text-muted-foreground hover:text-primary py-2 transition-colors"
+              className="flex min-h-12 items-center rounded-lg px-2 text-lg font-medium text-muted-foreground transition-colors hover:bg-white/5 hover:text-primary"
               onClick={() => setIsOpen(false)}
             >
               {link.label}

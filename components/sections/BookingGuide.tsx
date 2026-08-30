@@ -29,8 +29,8 @@ const steps = [
 
 export const BookingGuide = () => {
   return (
-    <section id="booking-guide" className="py-24 bg-luxury-dark relative">
-      <div className="container mx-auto px-6">
+    <section id="booking-guide" className="relative bg-luxury-dark py-16 sm:py-20 md:py-24">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -39,13 +39,13 @@ export const BookingGuide = () => {
             transition={{ duration: 0.6 }}
           >
             <span className="text-primary font-semibold tracking-widest uppercase text-sm">Reserva online</span>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mt-4 tracking-tight">
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
               Tu turno, en cuatro pasos
             </h2>
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-8">
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (

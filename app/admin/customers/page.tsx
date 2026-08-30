@@ -68,9 +68,9 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      <div className="bg-luxury-grey border border-white/10 rounded-3xl overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-luxury-grey md:rounded-3xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="mobile-card-table customers-table w-full border-collapse text-left">
             <thead className="bg-white/5 text-muted-foreground text-xs uppercase tracking-wider font-semibold">
               <tr>
                 <th className="px-6 py-4">Nombre</th>

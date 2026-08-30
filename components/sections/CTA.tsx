@@ -8,13 +8,13 @@ import Link from "next/link";
 
 export const CTA = () => {
   return (
-    <section id="contact" className="py-24 bg-luxury-black relative overflow-hidden">
+    <section id="contact" className="relative overflow-hidden bg-luxury-black py-16 sm:py-20 md:py-24">
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
       </div>
 
-      <div className="container mx-auto px-6 relative z-10 text-center">
+      <div className="container relative z-10 mx-auto px-4 text-center sm:px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -22,7 +22,7 @@ export const CTA = () => {
           transition={{ duration: 0.8 }}
           className="max-w-3xl mx-auto"
         >
-          <h2 className="text-4xl md:text-6xl font-bold text-white mb-8 tracking-tighter leading-tight">
+          <h2 className="mb-6 text-3xl font-bold leading-tight tracking-tighter text-white sm:text-4xl md:mb-8 md:text-6xl">
             ¿Hace falta un corte? <br />
             <span className="text-primary italic">Reservá en un minuto.</span>
           </h2>

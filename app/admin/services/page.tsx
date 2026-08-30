@@ -119,9 +119,9 @@ export default function ServicesAdminPage() {
 
       {error && !modalOpen && <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">{error}</div>}
 
-      <section className="overflow-hidden rounded-3xl border border-white/[0.08] bg-luxury-grey">
+      <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-luxury-grey md:rounded-3xl">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left">
+          <table className="mobile-card-table services-table w-full text-left md:min-w-[760px]">
             <thead className="border-b border-white/[0.06] bg-white/[0.025] text-xs font-semibold uppercase tracking-wider text-zinc-500"><tr><th className="px-6 py-4">Servicio</th><th className="px-6 py-4">Precio</th><th className="px-6 py-4">Duración</th><th className="px-6 py-4">Barberos</th><th className="px-6 py-4">Estado</th><th className="px-6 py-4 text-right">Acciones</th></tr></thead>
             <tbody className="divide-y divide-white/[0.06]">
               {isLoading ? <tr><td colSpan={6} className="px-6 py-14 text-center text-sm text-zinc-500"><Loader2 className="mx-auto mb-2 animate-spin text-primary" /> Cargando servicios...</td></tr>
@@ -139,11 +139,11 @@ export default function ServicesAdminPage() {
         </div>
       </section>
 
-      {modalOpen && createPortal(<div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalOpen(false); }}>
-        <section role="dialog" aria-modal="true" aria-labelledby="service-modal-title" className="my-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-[#191919] shadow-2xl">
+      {modalOpen && createPortal(<div className="fixed inset-0 z-[200] flex items-end justify-center overflow-y-auto bg-black/75 p-0 backdrop-blur-md sm:items-center sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalOpen(false); }}>
+        <section role="dialog" aria-modal="true" aria-labelledby="service-modal-title" className="flex max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-[#191919] shadow-2xl sm:my-auto sm:rounded-2xl">
           <header className="flex items-center justify-between border-b border-white/10 px-6 py-5"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary"><Scissors size={18} /></div><div><h2 id="service-modal-title" className="text-lg font-semibold text-white">{editingId ? "Editar servicio" : "Nuevo servicio"}</h2><p className="mt-0.5 text-xs text-zinc-500">Definí precio, duración y disponibilidad.</p></div></div><button type="button" aria-label="Cerrar" onClick={() => setModalOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-white/5 hover:text-white"><X size={19} /></button></header>
           <form onSubmit={saveService}>
-            <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
+            <div className="grid overflow-y-auto gap-4 px-4 py-5 sm:grid-cols-2 sm:px-6">
               <Field label="Nombre"><input autoFocus required value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Ej. Color y corte" className={inputClass} /></Field>
               <Field label="Estado"><select value={form.isActive ? "active" : "inactive"} onChange={(event) => setForm({ ...form, isActive: event.target.value === "active" })} className={inputClass}><option value="active">Activo</option><option value="inactive">Inactivo</option></select></Field>
               <Field label="Precio"><div className="relative"><span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">$</span><input required type="number" min="1" step="0.01" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} placeholder="15000" className={cn(inputClass, "pl-8")} /></div></Field>

@@ -78,6 +78,93 @@
   }
 }
 
+/* Las tablas administrativas conservan su diseño en escritorio y pasan a
+   tarjetas táctiles en pantallas angostas. */
+@media (max-width: 767px) {
+  .mobile-card-table,
+  .mobile-card-table tbody,
+  .mobile-card-table tr,
+  .mobile-card-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .mobile-card-table thead {
+    display: none;
+  }
+
+  .mobile-card-table tbody {
+    padding: 0.25rem 0.875rem;
+  }
+
+  .mobile-card-table tbody tr {
+    margin: 0.625rem 0;
+    overflow: visible;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 1rem;
+    background: rgb(255 255 255 / 0.025);
+  }
+
+  .mobile-card-table tbody td {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+    padding: 0.75rem 0.875rem;
+    text-align: right;
+  }
+
+  .mobile-card-table tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  .mobile-card-table tbody td::before {
+    flex: 0 0 auto;
+    color: rgb(161 161 170);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .mobile-card-table tbody td[colspan] {
+    display: block;
+    padding: 2rem 1rem;
+    text-align: center;
+  }
+
+  .mobile-card-table tbody td[colspan]::before {
+    display: none;
+  }
+
+  .appointments-table td:nth-child(1)::before { content: "Cliente"; }
+  .appointments-table td:nth-child(2)::before { content: "Barbero"; }
+  .appointments-table td:nth-child(3)::before { content: "Servicio"; }
+  .appointments-table td:nth-child(4)::before { content: "Fecha y hora"; }
+  .appointments-table td:nth-child(5)::before { content: "Estado"; }
+  .appointments-table td:nth-child(6)::before { content: "Acciones"; }
+
+  .barbers-table td:nth-child(1)::before { content: "Barbero"; }
+  .barbers-table td:nth-child(2)::before { content: "Especialidad"; }
+  .barbers-table td:nth-child(3)::before { content: "Cortes hoy"; }
+  .barbers-table td:nth-child(4)::before { content: "Estado"; }
+  .barbers-table td:nth-child(5)::before { content: "Acciones"; }
+
+  .services-table td:nth-child(1)::before { content: "Servicio"; }
+  .services-table td:nth-child(2)::before { content: "Precio"; }
+  .services-table td:nth-child(3)::before { content: "Duración"; }
+  .services-table td:nth-child(4)::before { content: "Barberos"; }
+  .services-table td:nth-child(5)::before { content: "Estado"; }
+  .services-table td:nth-child(6)::before { content: "Acciones"; }
+
+  .customers-table td:nth-child(1)::before { content: "Cliente"; }
+  .customers-table td:nth-child(2)::before { content: "Teléfono"; }
+  .customers-table td:nth-child(3)::before { content: "Email"; }
+  .customers-table td:nth-child(4)::before { content: "Completados"; }
+}
+
 /* Custom Scrollbar for Luxury Look */
 ::-webkit-scrollbar {
   width: 8px;

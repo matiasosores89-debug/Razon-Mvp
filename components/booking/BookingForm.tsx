@@ -273,10 +273,10 @@ export const BookingForm = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Reserva tu Turno</h2>
-        <div className="flex justify-center items-center gap-2 text-muted-foreground text-sm">
+    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-12">
+      <div className="mb-7 text-center sm:mb-12">
+        <h2 className="mb-3 text-2xl font-bold text-white sm:mb-4 sm:text-3xl md:text-4xl">Reserva tu Turno</h2>
+        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground sm:gap-2 sm:text-sm">
           {["Barbero", "Servicio", "Fecha", "Datos", "Confirmar"].map((label, i) => (
             <React.Fragment key={label}>
               <div className={`h-2 w-2 rounded-full ${
@@ -285,20 +285,20 @@ export const BookingForm = () => {
                 (i === 4 && step === "confirm")
                 ? "bg-primary w-4" : "bg-white/20"
               }`} />
-              {i < 4 && <div className="h-px w-8 bg-white/10" />}
-              <span className={
+              {i < 4 && <div className="h-px w-3 bg-white/10 sm:w-8" />}
+              <span className={`hidden sm:inline ${
                 (i === 0 && step === "barber") || (i === 1 && step === "service") ||
                 (i === 2 && step === "slot") || (i === 3 && step === "customer") ||
                 (i === 4 && step === "confirm")
                 ? "text-primary font-medium" : ""
-              }>{label}</span>
-              {i < 4 && <div className="h-px w-8 bg-white/10" />}
+              }`}>{label}</span>
+              {i < 4 && <div className="hidden h-px w-8 bg-white/10 sm:block" />}
             </React.Fragment>
           ))}
         </div>
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-3xl p-8 relative overflow-hidden">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 sm:rounded-3xl sm:p-8">
         {errors.booking && <BookingErrorNotice notice={errors.booking as BookingNotice} />}
         <AnimatePresence mode="wait">
           {step === "barber" && (
@@ -307,7 +307,7 @@ export const BookingForm = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-8"
+              className="space-y-6 sm:space-y-8"
             >
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-white mb-2">Elige tu Barbero</h3>
@@ -324,7 +324,7 @@ export const BookingForm = () => {
                   variant="primary"
                   disabled={!selection.barberId}
                   onClick={nextStep}
-                  className="px-8"
+                  className="w-full px-8 sm:w-auto"
                 >
                   Siguiente <ArrowRight size={18} className="ml-2" />
                 </Button>
@@ -338,7 +338,7 @@ export const BookingForm = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-8"
+              className="space-y-6 sm:space-y-8"
             >
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-white mb-2">Selecciona el Servicio</h3>
@@ -350,7 +350,7 @@ export const BookingForm = () => {
                 onSelect={(id) => { clearBookingError(); setSelection(prev => ({ ...prev, serviceId: id })); }}
                 isLoading={apiLoading.services}
               />
-              <div className="flex justify-between">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
                 <Button variant="outline" onClick={prevStep} className="text-white border-white/10 hover:bg-white/10">
                   <ArrowLeft size={18} className="mr-2" /> Volver
                 </Button>
@@ -358,7 +358,7 @@ export const BookingForm = () => {
                   variant="primary"
                   disabled={!selection.serviceId}
                   onClick={nextStep}
-                  className="px-8"
+                  className="w-full px-8 sm:w-auto"
                 >
                   Siguiente <ArrowRight size={18} className="ml-2" />
                 </Button>
@@ -372,7 +372,7 @@ export const BookingForm = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-8"
+              className="space-y-6 sm:space-y-8"
             >
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-white mb-2">Fecha y Hora</h3>
@@ -386,7 +386,7 @@ export const BookingForm = () => {
                 onSelectSlot={(slot) => { clearBookingError(); setSelection(prev => ({ ...prev, slot })); }}
                 isLoading={apiLoading.slots}
               />
-              <div className="flex justify-between">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
                 <Button variant="outline" onClick={prevStep} className="text-white border-white/10 hover:bg-white/10">
                   <ArrowLeft size={18} className="mr-2" /> Volver
                 </Button>
@@ -394,7 +394,7 @@ export const BookingForm = () => {
                   variant="primary"
                   disabled={!selection.slot}
                   onClick={nextStep}
-                  className="px-8"
+                  className="w-full px-8 sm:w-auto"
                 >
                   Siguiente <ArrowRight size={18} className="ml-2" />
                 </Button>
@@ -408,7 +408,7 @@ export const BookingForm = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-8"
+              className="space-y-6 sm:space-y-8"
             >
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-white mb-2">Tus Datos</h3>
@@ -419,14 +419,14 @@ export const BookingForm = () => {
                 onChange={handleCustomerChange}
                 errors={errors}
               />
-              <div className="flex justify-between">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
                 <Button variant="outline" onClick={prevStep} className="text-white border-white/10 hover:bg-white/10">
                   <ArrowLeft size={18} className="mr-2" /> Volver
                 </Button>
                 <Button
                   variant="primary"
                   onClick={nextStep}
-                  className="px-8"
+                  className="w-full px-8 sm:w-auto"
                 >
                   Revisar Turno <ArrowRight size={18} className="ml-2" />
                 </Button>
@@ -440,27 +440,27 @@ export const BookingForm = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-8"
+              className="space-y-6 sm:space-y-8"
             >
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-white mb-2">Confirmar Reserva</h3>
                 <p className="text-muted-foreground">Verifica que todo esté correcto</p>
               </div>
 
-              <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-4">
-                <div className="flex justify-between py-2 border-b border-white/5">
+              <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:space-y-4 sm:p-6">
+                <div className="flex flex-col gap-1 border-b border-white/5 py-2 sm:flex-row sm:justify-between sm:gap-4">
                   <span className="text-muted-foreground">Barbero</span>
                   <span className="text-white font-medium">
                     {data.barbers.find(b => b.id === selection.barberId)?.name}
                   </span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-white/5">
+                <div className="flex flex-col gap-1 border-b border-white/5 py-2 sm:flex-row sm:justify-between sm:gap-4">
                   <span className="text-muted-foreground">Servicio</span>
                   <span className="text-white font-medium">
                     {data.services.find(s => s.id === selection.serviceId)?.title}
                   </span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-white/5">
+                <div className="flex flex-col gap-1 border-b border-white/5 py-2 sm:flex-row sm:justify-between sm:gap-4">
                   <span className="text-muted-foreground">Fecha y Hora</span>
                   <span className="text-white font-medium">
                     {selection.slot && new Date(selection.slot).toLocaleString('es-AR', {
@@ -470,7 +470,7 @@ export const BookingForm = () => {
                     })}
                   </span>
                 </div>
-                <div className="flex justify-between py-2">
+                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:justify-between sm:gap-4">
                   <span className="text-muted-foreground">Cliente</span>
                   <span className="text-white font-medium">{selection.customer.name}</span>
                 </div>
@@ -480,7 +480,7 @@ export const BookingForm = () => {
                 <Turnstile action="book_appointment" onVerify={setTurnstileToken} resetKey={turnstileReset} />
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
                 <Button variant="outline" onClick={prevStep} className="text-white border-white/10 hover:bg-white/10">
                   <ArrowLeft size={18} className="mr-2" /> Editar
                 </Button>
@@ -488,7 +488,7 @@ export const BookingForm = () => {
                   variant="primary"
                   onClick={handleSubmit}
                   disabled={apiLoading.submit || !turnstileToken}
-                  className="px-8 relative"
+                  className="relative w-full px-8 sm:w-auto"
                   aria-describedby={!turnstileToken ? "booking-security-help" : undefined}
                 >
                   {apiLoading.submit ? (

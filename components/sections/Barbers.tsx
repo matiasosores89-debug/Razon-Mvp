@@ -29,8 +29,8 @@ export const Barbers = () => {
 
   if (isLoading) {
     return (
-      <section id="barbers" className="py-24 bg-luxury-dark relative">
-        <div className="container mx-auto px-6 text-center">
+      <section id="barbers" className="relative bg-luxury-dark py-16 sm:py-20 md:py-24">
+        <div className="container mx-auto px-4 text-center sm:px-6">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto" />
         </div>
       </section>
@@ -38,8 +38,8 @@ export const Barbers = () => {
   }
 
   return (
-    <section id="barbers" className="py-24 bg-luxury-dark relative">
-      <div className="container mx-auto px-6">
+    <section id="barbers" className="relative bg-luxury-dark py-16 sm:py-20 md:py-24">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -48,7 +48,7 @@ export const Barbers = () => {
             transition={{ duration: 0.6 }}
           >
             <span className="text-primary font-semibold tracking-widest uppercase text-sm">El equipo</span>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mt-4 tracking-tight">
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
               Elegí quién te corta
             </h2>
             <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-lg">
@@ -57,7 +57,7 @@ export const Barbers = () => {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-4 md:gap-8">
           {barbers.map((barber, index) => (
             <motion.div
               key={barber.id}

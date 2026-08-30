@@ -26,10 +26,10 @@ export const Services = () => {
   }, []);
 
   return (
-    <section id="services" className="relative overflow-hidden bg-luxury-black py-24 sm:py-28 lg:py-32">
+    <section id="services" className="relative overflow-hidden bg-luxury-black py-16 sm:py-24 lg:py-32">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent" />
-      <div className="container mx-auto px-6">
-        <div className="grid gap-12 lg:grid-cols-[minmax(15rem,0.72fr)_minmax(0,1.55fr)] lg:gap-16 xl:gap-24">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="grid gap-8 sm:gap-12 lg:grid-cols-[minmax(15rem,0.72fr)_minmax(0,1.55fr)] lg:gap-16 xl:gap-24">
           <motion.header
             initial={{ opacity: 0, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -40,7 +40,7 @@ export const Services = () => {
             <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-full border border-primary/25 text-primary">
               <Scissors size={19} />
             </div>
-            <h2 className="max-w-md text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-white sm:text-5xl">
+            <h2 className="max-w-md text-balance text-3xl font-semibold leading-[1.05] tracking-[-0.035em] text-white sm:text-5xl">
               Elegí lo que necesitás hoy.
             </h2>
             <p className="mt-6 max-w-sm text-pretty text-base leading-7 text-zinc-400">

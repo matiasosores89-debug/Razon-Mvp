@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 
 export const About = () => {
   return (
-    <section id="about" className="py-24 bg-luxury-black relative overflow-hidden">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+    <section id="about" className="relative overflow-hidden bg-luxury-black py-16 sm:py-20 md:py-24">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -39,7 +39,7 @@ export const About = () => {
               <div className="h-1 w-12 bg-primary mt-2" />
             </div>
 
-            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
+            <h2 className="text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl">
               Un corte pensado <br />
               <span className="text-muted-foreground">para vos.</span>
             </h2>
@@ -52,7 +52,7 @@ export const About = () => {
               Hacemos cortes clásicos y actuales, perfilado de barba y servicio de navaja. Sin apuros, sin fórmulas repetidas y con recomendaciones claras para que el resultado te siga quedando bien después de salir.
             </p>
 
-            <div className="grid grid-cols-2 gap-8 mt-8">
+            <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-8">
               <div>
                 <h3 className="text-3xl font-bold text-white">A medida</h3>
                 <p className="text-muted-foreground text-sm">Cada corte empieza con una charla</p>

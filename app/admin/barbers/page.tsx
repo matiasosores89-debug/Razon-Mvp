@@ -187,8 +187,8 @@ export default function BarbersPage() {
 
       {pageMessage && <div className="rounded-xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-zinc-300">{pageMessage}</div>}
 
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-luxury-grey">
-        <div className="overflow-x-auto"><table className="w-full border-collapse text-left">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-luxury-grey md:rounded-3xl">
+        <div className="overflow-x-auto"><table className="mobile-card-table barbers-table w-full border-collapse text-left">
           <thead className="bg-white/5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"><tr><th className="px-6 py-4">Barbero</th><th className="px-6 py-4">Especialidad</th><th className="px-6 py-4 text-center">Cortes hoy</th><th className="px-6 py-4">Estado</th><th className="px-6 py-4 text-right">Acciones</th></tr></thead>
           <tbody className="divide-y divide-white/5">
             {isLoading ? <tr><td colSpan={5} className="px-6 py-12 text-center text-muted-foreground"><Loader2 className="mx-auto mb-2 animate-spin text-primary" />Cargando barberos...</td></tr>
@@ -205,11 +205,11 @@ export default function BarbersPage() {
       </div>
 
       {formModalOpen && createPortal(
-        <div className="fixed inset-0 z-[210] flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) closeFormModal(); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby="barber-form-title" className="my-auto w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[#191919] shadow-2xl">
+        <div className="fixed inset-0 z-[210] flex items-end justify-center overflow-y-auto bg-black/75 p-0 backdrop-blur-md sm:items-center sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) closeFormModal(); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="barber-form-title" className="flex max-h-[94dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-[#191919] shadow-2xl sm:my-auto sm:rounded-2xl">
             <header className="flex items-center justify-between border-b border-white/10 px-6 py-5"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary"><Scissors size={18} /></div><div><h2 id="barber-form-title" className="text-lg font-semibold text-white">{editingBarberId ? "Editar barbero" : "Nuevo barbero"}</h2><p className="mt-0.5 text-xs text-zinc-500">Datos públicos y estado dentro del equipo.</p></div></div><button type="button" aria-label="Cerrar" onClick={closeFormModal} className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-white/5 hover:text-white"><X size={19} /></button></header>
             <form onSubmit={saveBarber}>
-              <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
+              <div className="grid overflow-y-auto gap-4 px-4 py-5 sm:grid-cols-2 sm:px-6">
                 <Field label="Nombre"><input autoFocus required value={barberForm.name} onChange={(event) => setBarberForm({ ...barberForm, name: event.target.value })} placeholder="Nombre y apellido" className={inputClass} /></Field>
                 <Field label="Especialidad"><input required value={barberForm.specialty} onChange={(event) => setBarberForm({ ...barberForm, specialty: event.target.value })} placeholder="Ej. Corte clásico y barba" className={inputClass} /></Field>
                 <Field label="Años de experiencia"><input required type="number" min="0" step="1" value={barberForm.experience} onChange={(event) => setBarberForm({ ...barberForm, experience: event.target.value })} className={inputClass} /></Field>

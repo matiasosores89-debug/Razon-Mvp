@@ -29,7 +29,7 @@ export const ServiceSelector = ({ services, selectedServiceId, onSelect, isLoadi
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
           onClick={() => onSelect(service.id)}
-          className={`cursor-pointer relative p-5 rounded-xl border-2 transition-all duration-300 ${
+          className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-300 sm:p-5 ${
             selectedServiceId === service.id
               ? "border-primary bg-primary/10"
               : "border-white/10 bg-white/5 hover:border-white/20"
@@ -41,14 +41,14 @@ export const ServiceSelector = ({ services, selectedServiceId, onSelect, isLoadi
             </div>
           )}
 
-          <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-lg ${selectedServiceId === service.id ? "bg-primary text-luxury-black" : "bg-white/10 text-primary"}`}>
-              <Scissors size={24} />
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className={`shrink-0 rounded-lg p-2.5 sm:p-3 ${selectedServiceId === service.id ? "bg-primary text-luxury-black" : "bg-white/10 text-primary"}`}>
+              <Scissors size={22} />
             </div>
-            <div className="flex-1">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="text-lg font-bold text-white">{service.title}</h3>
-                <span className="text-primary font-bold">${service.price}</span>
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex flex-col gap-1 pr-7 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:pr-0">
+                <h3 className="text-base font-bold leading-tight text-white sm:text-lg">{service.title}</h3>
+                <span className="shrink-0 font-bold text-primary">${service.price}</span>
               </div>
               <p className="text-muted-foreground text-sm mb-2 line-clamp-2">
                 {service.description}

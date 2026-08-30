@@ -4,8 +4,8 @@ import { Scissors, MapPin, Phone, Mail } from "lucide-react";
 export const Footer = () => {
   return (
     <footer className="bg-luxury-black border-t border-border pt-16 pb-8">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-2 md:mb-12 md:grid-cols-4 md:gap-12">
           {/* Brand Column */}
           <div className="col-span-1 md:col-span-1 flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2">

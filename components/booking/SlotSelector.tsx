@@ -46,7 +46,7 @@ export const SlotSelector = ({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col items-center gap-4">
         <label className="text-muted-foreground text-sm font-medium flex items-center gap-2">
           <CalendarIcon size={16} /> Selecciona la fecha
@@ -55,7 +55,7 @@ export const SlotSelector = ({
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="bg-white/5 border border-white/10 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+          className="min-h-12 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary sm:w-auto"
         />
         <p className="text-white/60 text-sm italic">
           {selectedDate ? formatDate(selectedDate) : "Por favor selecciona un día"}
@@ -84,7 +84,7 @@ export const SlotSelector = ({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => onSelectSlot(slot.startTime)}
-                className={`relative p-3 rounded-xl border-2 transition-all duration-300 text-sm font-medium ${
+                className={`relative min-h-12 rounded-xl border-2 p-3 text-sm font-medium transition-all duration-300 ${
                   selectedSlot === slot.startTime
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-white/10 bg-white/5 text-white hover:border-white/20"
