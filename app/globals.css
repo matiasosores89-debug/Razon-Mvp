@@ -27,6 +27,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 0 0% 3%;
     --foreground: 0 0% 98%;
     --card: 0 0% 4%;
@@ -60,6 +61,14 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
+  }
+  select {
+    color-scheme: dark;
+  }
+  select option,
+  select optgroup {
+    background-color: #1a1a1a;
+    color: #f4f4f5;
   }
 }
 

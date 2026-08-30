@@ -18,7 +18,7 @@ export const About = () => {
             <div className="relative z-10 rounded-2xl overflow-hidden border border-border aspect-[4/5]">
               <img
                 src="/Barberia.jpg"
-                alt="Barber tools"
+                alt="Herramientas y espacio de trabajo de Sr. Bigote"
                 className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
               />
             </div>
@@ -35,31 +35,31 @@ export const About = () => {
             className="flex flex-col gap-6"
           >
             <div className="inline-block">
-              <span className="text-primary font-semibold tracking-widest uppercase text-sm">Nuestra Historia</span>
+              <span className="text-primary font-semibold tracking-widest uppercase text-sm">La barbería</span>
               <div className="h-1 w-12 bg-primary mt-2" />
             </div>
 
             <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
-              Tradición Renovada <br />
-              <span className="text-muted-foreground">estilo atemporal.</span>
+              Un corte pensado <br />
+              <span className="text-muted-foreground">para vos.</span>
             </h2>
 
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Fundada sobre los principios de la barbería clásica, Sr.bigote nace de la pasión por el detalle y el respeto por el oficio. No somos solo un lugar para cortarse el cabello; somos un santuario de cuidado personal.
+              En Sr. Bigote nos tomamos el tiempo de entender qué buscás antes de empezar. Trabajamos cada corte según tu pelo, tu estilo y el mantenimiento que quieras darle en casa.
             </p>
 
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Nuestra filosofía es simple: combinar la técnica ancestral de la navaja y la toalla caliente con las tendencias más vanguardistas del diseño masculino. Cada cliente es una obra única, y cada servicio es una búsqueda de la simetría perfecta.
+              Hacemos cortes clásicos y actuales, perfilado de barba y servicio de navaja. Sin apuros, sin fórmulas repetidas y con recomendaciones claras para que el resultado te siga quedando bien después de salir.
             </p>
 
             <div className="grid grid-cols-2 gap-8 mt-8">
               <div>
-                <h3 className="text-3xl font-bold text-white">10+</h3>
-                <p className="text-muted-foreground text-sm">Años de Experiencia</p>
+                <h3 className="text-3xl font-bold text-white">A medida</h3>
+                <p className="text-muted-foreground text-sm">Cada corte empieza con una charla</p>
               </div>
               <div>
-                <h3 className="text-3xl font-bold text-white">5k+</h3>
-                <p className="text-muted-foreground text-sm">Clientes Satisfechos</p>
+                <h3 className="text-3xl font-bold text-white">Sin espera</h3>
+                <p className="text-muted-foreground text-sm">Reservá tu horario online</p>
               </div>
             </div>
           </motion.div>

@@ -3,6 +3,7 @@
 import { FormEvent, Suspense, useState } from "react";
 import { Eye, EyeOff, LockKeyhole, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 function AdminLoginForm() {
   const router = useRouter();
@@ -24,7 +25,7 @@ function AdminLoginForm() {
       });
       const result = await response.json();
       if (!response.ok) {
-        setError(result.message || "No se pudo iniciar sesión.");
+        setError(result.message || result.error?.message || "No se pudo iniciar sesión.");
         return;
       }
       const next = searchParams.get("next");
@@ -55,7 +56,7 @@ function AdminLoginForm() {
             <p className="mt-2 text-sm leading-relaxed text-zinc-400">Ingresa tus credenciales para continuar.</p>
           </div>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-5" method="post" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label className="text-sm font-medium text-zinc-200" htmlFor="username">Usuario</label>
               <input id="username" name="username" type="text" autoComplete="username" required autoFocus className="h-12 w-full rounded-xl border border-white/15 bg-black/20 px-4 text-white outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
@@ -64,9 +65,12 @@ function AdminLoginForm() {
               <label className="text-sm font-medium text-zinc-200" htmlFor="password">Contraseña</label>
               <div className="relative">
                 <input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required className="h-12 w-full rounded-xl border border-white/15 bg-black/20 px-4 pr-12 text-white outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                <button type="button" onClick={() => setShowPassword((current) => !current)} className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-xl text-zinc-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}>
-                  {showPassword ? <EyeOff aria-hidden="true" size={19} /> : <Eye aria-hidden="true" size={19} />}
+                <button type="button" onClick={() => setShowPassword((current) => !current)} className="absolute inset-y-0 right-0 z-10 flex w-12 cursor-pointer items-center justify-center rounded-xl text-zinc-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={showPassword} title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}>
+                  {showPassword ? <EyeOff aria-hidden="true" className="pointer-events-none" size={19} /> : <Eye aria-hidden="true" className="pointer-events-none" size={19} />}
                 </button>
+              </div>
+              <div className="flex justify-end">
+                <Link href="/admin/forgot-password" className="text-sm text-zinc-400 transition hover:text-primary">¿Olvidaste tu contraseña?</Link>
               </div>
             </div>
             {error && <p role="alert" className="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200">{error}</p>}

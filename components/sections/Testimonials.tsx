@@ -10,21 +10,21 @@ const testimonials: Testimonial[] = [
     id: "1",
     name: "Carlos Mendoza",
     rating: 5,
-    text: "La atención al detalle es increíble. Nunca había tenido un corte tan preciso. El ambiente es relajante y el servicio es de primera clase.",
+    text: "Le mostré una foto de referencia y me explicaron qué iba a funcionar con mi pelo. Quedó tal cual lo habíamos hablado.",
     image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1974&auto=format&fit=crop",
   },
   {
     id: "2",
     name: "Andrés Villalobos",
     rating: 5,
-    text: "Un lugar donde realmente entienden lo que quieres. El afeitado imperial es una experiencia que todo hombre debería probar.",
+    text: "Reservé desde el celular y me atendieron a horario. Buen corte, buena charla y cero vueltas.",
     image: "https://images.unsplash.com/photo-1492562080023-a3668f738407?q=80&w=207//auto=format&fit=crop",
   },
   {
     id: "3",
     name: "Rodrigo Paz",
     rating: 4,
-    text: "Excelente servicio y barberos muy profesionales. Me encantó el trato y la calidad de los productos que utilizan.",
+    text: "Fui por corte y barba. Se tomaron el tiempo necesario y me explicaron cómo mantenerlo en casa.",
     image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1974&auto=format&fit=crop",
   },
 ];
@@ -40,9 +40,9 @@ export const Testimonials = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="text-primary font-semibold tracking-widest uppercase text-sm">Experiencias</span>
+            <span className="text-primary font-semibold tracking-widest uppercase text-sm">Opiniones</span>
             <h2 className="text-4xl md:text-5xl font-bold text-white mt-4 tracking-tight">
-              Lo que Dicen Nuestros Clientes
+              Lo cuentan quienes ya vinieron
             </h2>
           </motion.div>
         </div>
@@ -77,7 +77,7 @@ export const Testimonials = () => {
                 />
                 <div>
                   <h4 className="text-white font-bold">{item.name}</h4>
-                  <p className="text-xs text-muted-foreground">Cliente VIP</p>
+                  <p className="text-xs text-muted-foreground">Cliente de Sr. Bigote</p>
                 </div>
               </div>
             </motion.div>

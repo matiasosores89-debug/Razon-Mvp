@@ -1,21 +1,22 @@
-import { createHash, scryptSync, timingSafeEqual } from "node:crypto";
+import { prisma } from "@/lib/prisma";
+import { verifyPassword } from "@/lib/password";
 
 export const ADMIN_SESSION_COOKIE = "razor_admin_session";
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 8;
 
-export function verifyAdminCredentials(username: string, password: string): boolean {
-  const configuredUsername = Buffer.from(process.env.ADMIN_USERNAME ?? "Admin");
-  const suppliedUsername = Buffer.from(username);
-  const stored = process.env.ADMIN_PASSWORD_HASH;
-  if (!stored) throw new Error("Falta configurar ADMIN_PASSWORD_HASH");
-  const [algorithm, saltHex, hashHex] = stored.split(":");
-  if (algorithm !== "scrypt" || !saltHex || !hashHex) throw new Error("ADMIN_PASSWORD_HASH tiene un formato invalido");
-  const expectedHash = Buffer.from(hashHex, "hex");
-  const suppliedHash = scryptSync(password, Buffer.from(saltHex, "hex"), expectedHash.length);
-  const usernameMatches = suppliedUsername.length === configuredUsername.length && timingSafeEqual(suppliedUsername, configuredUsername);
-  return usernameMatches && timingSafeEqual(suppliedHash, expectedHash);
-}
+export async function verifyAdminCredentials(username: string, password: string) {
+  let admin = await prisma.adminUser.findUnique({ where: { username } });
 
-export function getLoginRateLimitKey(ip: string): string {
-  return createHash("sha256").update(ip).digest("hex");
+  // Backwards-compatible bootstrap: the existing environment credential is
+  // persisted once, so future password changes survive deploys and restarts.
+  if (!admin && username === (process.env.ADMIN_USERNAME ?? "Admin")) {
+    const passwordHash = process.env.ADMIN_PASSWORD_HASH;
+    const email = process.env.ADMIN_EMAIL ?? "admin@razor.local";
+    if (!passwordHash) throw new Error("Falta configurar ADMIN_PASSWORD_HASH");
+    if (!verifyPassword(password, passwordHash)) return null;
+    admin = await prisma.adminUser.create({ data: { username, email: email.toLowerCase(), passwordHash } });
+  }
+
+  if (!admin?.isActive || !verifyPassword(password, admin.passwordHash)) return null;
+  return admin;
 }

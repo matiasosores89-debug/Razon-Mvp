@@ -47,12 +47,12 @@ export const Barbers = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="text-primary font-semibold tracking-widest uppercase text-sm">El Equipo</span>
+            <span className="text-primary font-semibold tracking-widest uppercase text-sm">El equipo</span>
             <h2 className="text-4xl md:text-5xl font-bold text-white mt-4 tracking-tight">
-              Maestros del Detalle
+              Elegí quién te corta
             </h2>
             <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-lg">
-              Nuestros barberos no solo cortan el cabello, esculpen la identidad de cada hombre.
+              Conocé la especialidad de cada barbero y reservá directamente con el que mejor encaje con tu estilo.
             </p>
           </motion.div>
         </div>
@@ -81,12 +81,12 @@ export const Barbers = () => {
                 <p className="text-muted-foreground text-sm mt-1">{barber.specialty}</p>
                 <div className="flex items-center gap-2 mt-4">
                   <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full border border-primary/20">
-                    {barber.experience} años de exp.
+                    {barber.experience} años de experiencia
                   </span>
                 </div>
                 <Link href={`/booking?barberId=${barber.id}`}>
                   <Button variant="outline" className="w-full mt-6 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold">
-                    Reservar Turno
+                    Reservar con {barber.name.split(" ")[0]}
                   </Button>
                 </Link>
               </div>

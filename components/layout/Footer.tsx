@@ -17,7 +17,7 @@ export const Footer = () => {
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              La excelencia en el cuidado masculino. Un espacio diseñado para el hombre moderno que busca precisión, estilo y relajación.
+              Cortes, barba y atención sin apuro. Reservá online y vení en el horario que elegiste.
             </p>
           </div>
 
@@ -25,8 +25,8 @@ export const Footer = () => {
           <div>
             <h4 className="text-white font-semibold mb-6">Explorar</h4>
             <ul className="space-y-4">
-              <li><Link href="/#about" className="text-muted-foreground hover:text-primary text-sm transition-colors">Sobre Nosotros</Link></li>
-              <li><Link href="/#barbers" className="text-muted-foreground hover:text-primary text-sm transition-colors">Nuestros Barberos</Link></li>
+              <li><Link href="/#about" className="text-muted-foreground hover:text-primary text-sm transition-colors">La barbería</Link></li>
+              <li><Link href="/#barbers" className="text-muted-foreground hover:text-primary text-sm transition-colors">El equipo</Link></li>
               <li><Link href="/#services" className="text-muted-foreground hover:text-primary text-sm transition-colors">Servicios</Link></li>
               <li><Link href="/#testimonials" className="text-muted-foreground hover:text-primary text-sm transition-colors">Experiencias</Link></li>
             </ul>

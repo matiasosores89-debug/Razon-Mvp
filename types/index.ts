@@ -12,7 +12,7 @@ export interface Service {
   description: string;
   icon: any; // Lucide icon component
   price: string;
-  duration: string;
+  duration: number;
 }
 
 export interface Testimonial {

@@ -26,19 +26,23 @@ export async function createSessionToken(username: string): Promise<string> {
 }
 
 export async function verifySessionToken(token?: string): Promise<boolean> {
+  return Boolean(await getSessionSubject(token));
+}
+
+export async function getSessionSubject(token?: string): Promise<string | null> {
   const secret = process.env.ADMIN_SESSION_SECRET;
-  if (!secret || !token) return false;
+  if (!secret || !token) return null;
   const [payload, signature, extra] = token.split(".");
-  if (!payload || !signature || extra) return false;
+  if (!payload || !signature || extra) return null;
   const expected = await sign(payload, secret);
-  if (signature.length !== expected.length) return false;
+  if (signature.length !== expected.length) return null;
   let difference = 0;
   for (let index = 0; index < signature.length; index += 1) difference |= signature.charCodeAt(index) ^ expected.charCodeAt(index);
-  if (difference !== 0) return false;
+  if (difference !== 0) return null;
   try {
     const decoded = JSON.parse(fromBase64Url(payload)) as SessionPayload;
-    return decoded.sub === (process.env.ADMIN_USERNAME ?? "Admin") && decoded.exp > Date.now() / 1000;
+    return typeof decoded.sub === "string" && decoded.sub.length > 0 && decoded.exp > Date.now() / 1000 ? decoded.sub : null;
   } catch {
-    return false;
+    return null;
   }
 }

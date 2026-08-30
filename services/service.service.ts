@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { ServiceSchema } from "@/lib/validations";
+import { AdminServiceSchema, ServiceSchema } from "@/lib/validations";
 
 export const ServiceService = {
   /**
@@ -15,9 +15,58 @@ export const ServiceService = {
   /**
    * Lists all services.
    */
-  async getAll() {
+  async getAll(barberId?: string) {
+    if (barberId) {
+      const barber = await prisma.barber.findUnique({ where: { id: barberId }, select: { servicesConfigured: true } });
+      if (barber?.servicesConfigured) {
+        return prisma.service.findMany({
+          where: { isActive: true, barbers: { some: { barberId } } },
+          orderBy: { title: "asc" },
+        });
+      }
+    }
     return await prisma.service.findMany({
+      where: { isActive: true },
       orderBy: { title: 'asc' },
+    });
+  },
+
+  async getAdminCatalog() {
+    const [services, barbers] = await Promise.all([
+      prisma.service.findMany({
+        orderBy: [{ isActive: "desc" }, { title: "asc" }],
+        include: {
+          barbers: { include: { barber: { select: { id: true, name: true } } } },
+          _count: { select: { appointments: true } },
+        },
+      }),
+      prisma.barber.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    ]);
+    return { services, barbers };
+  },
+
+  async createAdmin(data: unknown) {
+    const { barberIds, ...serviceData } = AdminServiceSchema.parse(data);
+    return prisma.$transaction(async (tx) => {
+      const service = await tx.service.create({ data: serviceData });
+      if (barberIds.length > 0) {
+        await tx.barberService.createMany({ data: barberIds.map((barberId) => ({ barberId, serviceId: service.id })) });
+        await tx.barber.updateMany({ where: { id: { in: barberIds } }, data: { servicesConfigured: true } });
+      }
+      return service;
+    });
+  },
+
+  async updateAdmin(id: string, data: unknown) {
+    const { barberIds, ...serviceData } = AdminServiceSchema.partial().parse(data);
+    return prisma.$transaction(async (tx) => {
+      const service = await tx.service.update({ where: { id }, data: serviceData });
+      if (barberIds) {
+        await tx.barberService.deleteMany({ where: { serviceId: id } });
+        if (barberIds.length > 0) await tx.barberService.createMany({ data: barberIds.map((barberId) => ({ barberId, serviceId: id })) });
+        await tx.barber.updateMany({ where: { id: { in: barberIds } }, data: { servicesConfigured: true } });
+      }
+      return service;
     });
   },
 

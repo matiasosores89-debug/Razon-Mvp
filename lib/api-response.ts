@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
+import { AppError } from "@/lib/app-error";
 
 export type ApiError = {
   message: string;
@@ -52,10 +53,14 @@ export function createErrorResponse(message: string, status = 500, details?: any
 export function handleApiError(error: unknown) {
   console.error("[API_ERROR]:", error);
 
+  if (error instanceof AppError) {
+    return createErrorResponse(error.message, error.status, error.details, error.code);
+  }
+
   // Zod validation errors
   if (error instanceof ZodError) {
     return createErrorResponse(
-      "Validation failed",
+      "Revisá los datos ingresados e intentá nuevamente.",
       400,
       error.flatten().fieldErrors,
       "VALIDATION_ERROR"
@@ -66,14 +71,21 @@ export function handleApiError(error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     // P2025: An operation failed because it depends on one or more records that were not found.
     if (error.code === "P2025") {
-      return createErrorResponse("The requested record was not found", 404, null, "NOT_FOUND");
+      return createErrorResponse("No encontramos el registro solicitado.", 404, null, "NOT_FOUND");
+    }
+    if (error.code === "P2002") {
+      return createErrorResponse("Ese dato ya está registrado.", 409, null, "DUPLICATE_RECORD");
     }
     return createErrorResponse(
-      `Database error: ${error.message}`,
+      "No pudimos completar la operación en este momento.",
       500,
       null,
       "DATABASE_ERROR"
     );
+  }
+
+  if (error instanceof Prisma.PrismaClientUnknownRequestError && error.message.includes("Appointment_no_active_overlap")) {
+    return createErrorResponse("Ese horario acaba de ocuparse. Elegí otro para continuar.", 409, null, "SLOT_UNAVAILABLE");
   }
 
   // Generic JS errors
@@ -82,5 +94,5 @@ export function handleApiError(error: unknown) {
   }
 
   // Unknown errors
-  return createErrorResponse("An unexpected error occurred", 500, null, "UNKNOWN_ERROR");
+  return createErrorResponse("Ocurrió un error inesperado. Intentá nuevamente.", 500, null, "UNKNOWN_ERROR");
 }

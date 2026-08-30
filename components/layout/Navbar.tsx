@@ -67,7 +67,7 @@ export const Navbar = () => {
             </Link>
           ))}
           <Button asChild variant="primary" size="sm" className="font-semibold">
-            <Link href="/booking">Reservar Turno</Link>
+            <Link href="/booking">Reservar turno</Link>
           </Button>
         </div>
 
@@ -104,7 +104,7 @@ export const Navbar = () => {
             </Link>
           ))}
           <Button asChild variant="primary" className="w-full py-6 text-lg">
-            <Link href="/booking" onClick={() => setIsOpen(false)}>Reservar Turno</Link>
+            <Link href="/booking" onClick={() => setIsOpen(false)}>Reservar turno</Link>
           </Button>
         </div>
       </div>

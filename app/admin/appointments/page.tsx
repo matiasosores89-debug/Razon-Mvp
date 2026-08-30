@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
-import { Search, CheckCircle, XCircle, AlertCircle, Loader2, Plus, Edit2, Trash2, X, ChevronDown, MoreVertical } from "lucide-react";
-import { formatForShopDateTimeInput, SHOP_TIME_ZONE, shopLocalDateTimeToIso } from "@/lib/datetime";
+import { Search, CheckCircle, XCircle, AlertCircle, Loader2, Plus, Edit2, Trash2, X, ChevronDown, MoreVertical, ArrowUp, ArrowDown, CalendarClock, Save } from "lucide-react";
+import { formatForShopDateTimeInput, getShopDateString, SHOP_TIME_ZONE, shopLocalDateTimeToIso } from "@/lib/datetime";
 
 interface Appointment {
   id: string;
@@ -17,6 +18,9 @@ interface Appointment {
 interface Barber { id: string; name: string; }
 interface Service { id: string; title: string; price: string; }
 interface Customer { id: string; name: string; phone: string; }
+type DateScope = "all" | "today";
+type SortOrder = "asc" | "desc";
+type ActionMenuPosition = { top: number; left: number };
 
 const StatusBadge = ({ status }: { status: Appointment["status"] }) => {
   const configs = {
@@ -42,8 +46,11 @@ export default function AppointmentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [filters, setFilters] = useState({ search: "", status: "" });
+  const [dateScope, setDateScope] = useState<DateScope>("today");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
+  const [actionMenuPosition, setActionMenuPosition] = useState<ActionMenuPosition | null>(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,7 +75,78 @@ export default function AppointmentsPage() {
   useEffect(() => {
     fetchAppointments();
     fetchOptions();
-  }, [filters]);
+  }, []);
+
+  useEffect(() => {
+    if (!openActionMenu) return;
+
+    const closeActionMenu = () => {
+      setOpenActionMenu(null);
+      setActionMenuPosition(null);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeActionMenu();
+    };
+
+    window.addEventListener("resize", closeActionMenu);
+    window.addEventListener("scroll", closeActionMenu, true);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("resize", closeActionMenu);
+      window.removeEventListener("scroll", closeActionMenu, true);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openActionMenu]);
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsModalOpen(false);
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isModalOpen]);
+
+  const toggleActionMenu = (
+    id: string,
+    status: Appointment["status"],
+    button: HTMLButtonElement
+  ) => {
+    if (openActionMenu === id) {
+      setOpenActionMenu(null);
+      setActionMenuPosition(null);
+      return;
+    }
+
+    const rect = button.getBoundingClientRect();
+    const menuWidth = 208;
+    // Scheduled appointments show four actions; every other status only shows delete.
+    // Use the actual menu height so short menus are not unnecessarily moved above the row.
+    const menuHeight = status === "SCHEDULED" ? 190 : 58;
+    const viewportPadding = 12;
+    const gap = 8;
+    const fitsBelow = rect.bottom + gap + menuHeight <= window.innerHeight - viewportPadding;
+
+    setActionMenuPosition({
+      top: fitsBelow
+        ? rect.bottom + gap
+        : Math.max(viewportPadding, rect.top - menuHeight - gap),
+      left: Math.min(
+        window.innerWidth - menuWidth - viewportPadding,
+        Math.max(viewportPadding, rect.right - menuWidth)
+      ),
+    });
+    setOpenActionMenu(id);
+  };
 
   async function fetchAppointments() {
     setIsLoading(true);
@@ -192,14 +270,19 @@ export default function AppointmentsPage() {
     setIsModalOpen(true);
   };
 
+  const today = getShopDateString();
   const filteredAppointments = appointments
     .filter(app => {
       const matchesSearch = app.customer.name.toLowerCase().includes(filters.search.toLowerCase()) ||
                             app.customer.phone.includes(filters.search);
       const matchesStatus = filters.status === "" || app.status === filters.status;
-      return matchesSearch && matchesStatus;
+      const matchesDate = dateScope === "all" || getShopDateString(new Date(app.startTime)) === today;
+      return matchesSearch && matchesStatus && matchesDate;
     })
-    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+    .sort((a, b) => {
+      const difference = new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+      return sortOrder === "asc" ? difference : -difference;
+    });
 
   const statusOptions = [
     { value: "", label: "Todos" },
@@ -211,39 +294,73 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
+      <div className="space-y-5">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white">Gestión de Turnos</h2>
           </div>
-          <Button onClick={openCreateModal} className="bg-primary text-luxury-black hover:bg-primary/90 font-bold flex items-center gap-2">
-            <Plus size={18} /> Nuevo Turno
+          <Button onClick={openCreateModal} className="shrink-0 bg-primary text-luxury-black hover:bg-primary/90 font-semibold flex items-center gap-2">
+            <Plus size={17} /> Nuevo turno
           </Button>
         </div>
 
-        <div className="flex flex-row items-center gap-4 w-full lg:w-auto">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+        <div className="flex w-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-3 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap">
+          <div className="order-2 inline-flex h-10 rounded-lg border border-white/10 bg-luxury-black/40 p-1 sm:flex-none" aria-label="Filtrar turnos por fecha">
+            {([
+              { value: "all", label: "Todos" },
+              { value: "today", label: "Hoy" },
+            ] as const).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={dateScope === option.value}
+                onClick={() => setDateScope(option.value)}
+                className={cn(
+                  "flex-1 rounded-md px-4 text-sm font-medium transition-colors sm:flex-none",
+                  dateScope === option.value
+                    ? "bg-primary text-luxury-black"
+                    : "text-muted-foreground hover:text-white"
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setSortOrder(current => current === "asc" ? "desc" : "asc")}
+            className="order-4 flex h-10 items-center justify-center gap-2 rounded-lg border border-white/10 bg-luxury-black/40 px-3 text-sm font-medium text-white transition-colors hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-primary/30 sm:flex-none"
+            aria-label={`Ordenar por hora: ${sortOrder === "asc" ? "más temprano primero" : "más tarde primero"}`}
+          >
+            {sortOrder === "asc" ? <ArrowUp size={16} className="text-primary" /> : <ArrowDown size={16} className="text-primary" />}
+            {sortOrder === "asc" ? "Más temprano" : "Más tarde"}
+          </button>
+
+          <div className="relative order-1 min-w-0 flex-1 sm:basis-full lg:basis-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={17} />
             <input
-              type="text"
-              placeholder="Buscar cliente..."
-              className="w-full bg-white/5 border border-white/10 text-white pl-10 pr-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+              type="search"
+              aria-label="Buscar cliente"
+              placeholder={"Buscar por nombre o tel\u00e9fono..."}
+              className="h-10 w-full rounded-lg border border-white/10 bg-luxury-black/40 pl-10 pr-4 text-sm text-white outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               value={filters.search}
               onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
             />
           </div>
-          <div className="relative w-full md:w-auto">
+          <div className="relative order-3 min-w-0 flex-1 sm:w-44 sm:flex-none">
             <button
+              type="button"
               onClick={() => setIsStatusOpen(!isStatusOpen)}
               className={cn(
-                "w-full md:w-auto flex items-center justify-between gap-3 px-4 py-2 rounded-xl border transition-all text-sm font-medium",
+                "flex h-10 w-full items-center justify-between gap-3 rounded-lg border px-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30",
                 filters.status
                   ? "bg-primary/10 border-primary/30 text-primary"
-                  : "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                  : "bg-luxury-black/40 border-white/10 text-white hover:bg-white/5"
               )}
             >
-              <span className="min-w-[120px] text-left">
-                {statusOptions.find(opt => opt.value === filters.status)?.label || "Todos los Estados"}
+              <span className="truncate text-left">
+                {statusOptions.find(opt => opt.value === filters.status)?.label || "Todos los estados"}
               </span>
               <ChevronDown size={16} className={cn("transition-transform duration-200", isStatusOpen ? "rotate-180" : "")} />
             </button>
@@ -344,7 +461,10 @@ export default function AppointmentsPage() {
 
                         <div className="relative">
                           <button
-                            onClick={() => setOpenActionMenu(openActionMenu === app.id ? null : app.id)}
+                            type="button"
+                            aria-label="Cambiar estado del turno"
+                            aria-expanded={openActionMenu === app.id}
+                            onClick={(event) => toggleActionMenu(app.id, app.status, event.currentTarget)}
                             className={cn(
                               "p-1.5 rounded-lg transition-colors border",
                               openActionMenu === app.id
@@ -355,8 +475,13 @@ export default function AppointmentsPage() {
                             <MoreVertical size={16} />
                           </button>
 
-                          {openActionMenu === app.id && (
-                            <div className="absolute right-0 mt-2 w-48 bg-luxury-grey border border-white/10 rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 duration-100">
+                          {openActionMenu === app.id && actionMenuPosition && createPortal(
+                            <div
+                              role="menu"
+                              aria-label="Opciones del turno"
+                              className="fixed z-[120] w-52 overflow-hidden rounded-2xl border border-white/10 bg-luxury-grey py-2 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+                              style={{ top: actionMenuPosition.top, left: actionMenuPosition.left }}
+                            >
                               {app.status === "SCHEDULED" && (
                                 <>
                                   <button
@@ -386,7 +511,8 @@ export default function AppointmentsPage() {
                               >
                                 <Trash2 size={14} /> Eliminar Turno
                               </button>
-                            </div>
+                            </div>,
+                            document.body
                           )}
                         </div>
                         {isUpdating === app.id && <Loader2 className="animate-spin text-primary" size={16} />}
@@ -400,27 +526,52 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-luxury-grey border border-white/10 w-full max-w-md rounded-3xl shadow-2xl flex flex-col max-h-[95vh] my-auto">
-            <div className="flex justify-between items-center p-8 pb-4">
-              <h3 className="text-xl font-bold text-white">
-                {modalMode === "create" ? "Nuevo Turno" : "Editar Turno"}
-              </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-muted-foreground hover:text-white transition-colors">
-                <X size={24} />
+      {isModalOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md sm:p-6"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="appointment-modal-title"
+            className="my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#191919] shadow-[0_32px_90px_rgba(0,0,0,0.65)] sm:max-h-[calc(100dvh-3rem)]"
+          >
+            <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-6 py-5 sm:px-7">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                  <CalendarClock size={19} />
+                </div>
+                <div className="min-w-0">
+                  <h3 id="appointment-modal-title" className="text-lg font-semibold tracking-tight text-white">
+                    {modalMode === "create" ? "Nuevo turno" : "Editar turno"}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {modalMode === "create" ? "Completá los datos de la reserva." : "Actualizá los datos o el estado de la reserva."}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                aria-label="Cerrar"
+                onClick={() => setIsModalOpen(false)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+              >
+                <X size={19} />
               </button>
-            </div>
+            </header>
 
-            <div className="px-8 pb-8 overflow-y-auto">
-              <form onSubmit={(e) => { e.preventDefault(); handleSaveAppointment(); }} className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); handleSaveAppointment(); }} className="flex min-h-0 flex-1 flex-col">
+              <div className="grid min-h-0 flex-1 grid-cols-1 gap-x-5 gap-y-4 overflow-y-auto px-6 py-5 sm:grid-cols-2 sm:px-7">
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground ml-1">Cliente</label>
+                  <label className="text-xs font-medium text-zinc-400">Cliente</label>
                   <div className="relative">
                     <input
                       type="text"
                       placeholder="Buscar o escribir nombre..."
-                      className="w-full bg-white/5 border border-white/10 text-white p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                      className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.045] px-3.5 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 hover:border-white/15 focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                       value={customerSearch}
                       onChange={(e) => {
                         setCustomerSearch(e.target.value);
@@ -430,7 +581,7 @@ export default function AppointmentsPage() {
                       onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     />
                     {showSuggestions && customerSearch && (
-                      <div className="absolute z-50 w-full mt-1 bg-luxury-grey border border-white/10 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+                      <div className="absolute z-50 mt-2 max-h-52 w-full overflow-y-auto rounded-xl border border-white/10 bg-[#202020] py-1 shadow-2xl">
                         {customers
                           .filter(c =>
                             c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
@@ -445,7 +596,7 @@ export default function AppointmentsPage() {
                                 setCustomerSearch(c.name);
                                 setShowSuggestions(false);
                               }}
-                              className="w-full text-left px-4 py-3 text-sm hover:bg-white/5 transition-colors border-b border-white/5 last:border-none"
+                              className="w-full border-b border-white/5 px-3.5 py-2.5 text-left text-sm transition-colors last:border-none hover:bg-white/5"
                             >
                               <div className="flex flex-col">
                                 <span className="text-white font-medium">{c.name}</span>
@@ -472,7 +623,7 @@ export default function AppointmentsPage() {
                     required
                     type="text"
                     placeholder="Ej: +54 9 11..."
-                    className="w-full bg-white/5 border border-white/10 text-white p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                    className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.045] px-3.5 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 hover:border-white/15 focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     value={formData.customerPhone}
                     onChange={(e) => setFormData(prev => ({ ...prev, customerPhone: e.target.value }))}
                   />
@@ -482,7 +633,7 @@ export default function AppointmentsPage() {
                   <label className="text-xs font-medium text-muted-foreground ml-1">Barbero</label>
                   <select
                     required
-                    className="w-full bg-white/5 border border-white/10 text-white p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                    className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.045] px-3.5 text-sm text-white outline-none transition-colors hover:border-white/15 focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     value={formData.barberId}
                     onChange={(e) => setFormData(prev => ({ ...prev, barberId: e.target.value }))}
                   >
@@ -495,7 +646,7 @@ export default function AppointmentsPage() {
                   <label className="text-xs font-medium text-muted-foreground ml-1">Servicio</label>
                   <select
                     required
-                    className="w-full bg-white/5 border border-white/10 text-white p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                    className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.045] px-3.5 text-sm text-white outline-none transition-colors hover:border-white/15 focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     value={formData.serviceId}
                     onChange={(e) => setFormData(prev => ({ ...prev, serviceId: e.target.value }))}
                   >
@@ -509,7 +660,7 @@ export default function AppointmentsPage() {
                   <input
                     required
                     type="datetime-local"
-                    className="w-full bg-white/5 border border-white/10 text-white p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                    className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.045] px-3.5 text-sm text-white outline-none transition-colors hover:border-white/15 focus:border-primary/50 focus:ring-2 focus:ring-primary/15 [color-scheme:dark]"
                     value={formData.startTime}
                     onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
                   />
@@ -518,7 +669,7 @@ export default function AppointmentsPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground ml-1">Estado</label>
                   <select
-                    className="w-full bg-white/5 border border-white/10 text-white p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                    className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.045] px-3.5 text-sm text-white outline-none transition-colors hover:border-white/15 focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
                     value={formData.status}
                     onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as Appointment["status"] }))}
                   >
@@ -529,13 +680,20 @@ export default function AppointmentsPage() {
                   </select>
                 </div>
 
-                <Button type="submit" className="w-full bg-primary text-luxury-black font-bold py-3 rounded-xl hover:bg-primary/90 transition-all mt-4">
-                  {modalMode === "create" ? "Crear Turno" : "Guardar Cambios"}
+              </div>
+              <footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-white/10 bg-black/10 px-6 py-4 sm:flex-row sm:justify-end sm:px-7">
+                <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} className="h-10 px-4 text-zinc-300 hover:bg-white/5 hover:text-white">
+                  Cancelar
                 </Button>
-              </form>
-            </div>
-          </div>
-        </div>
+                <Button type="submit" className="h-10 gap-2 bg-primary px-5 font-semibold text-luxury-black hover:bg-primary/90">
+                  {modalMode === "edit" && <Save size={16} />}
+                  {modalMode === "create" ? "Crear turno" : "Guardar cambios"}
+                </Button>
+              </footer>
+            </form>
+          </section>
+        </div>,
+        document.body
       )}
     </div>
   );

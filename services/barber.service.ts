@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { BarberSchema } from "@/lib/validations";
+import { getShopDateString, getShopDayBounds, shopDateTime } from "@/lib/datetime";
 
 export const BarberService = {
   /**
@@ -7,6 +8,7 @@ export const BarberService = {
    */
   async getAll() {
     return await prisma.barber.findMany({
+      where: { isActive: true },
       orderBy: { createdAt: "asc" },
     });
   },
@@ -26,11 +28,11 @@ export const BarberService = {
    */
   async getBarbersWithStats() {
     const barbers = await prisma.barber.findMany({
+      include: { _count: { select: { appointments: true } } },
       orderBy: { name: 'asc' },
     });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const { start: today } = getShopDayBounds(getShopDateString());
 
     const barbersWithStats = await Promise.all(
       barbers.map(async (barber) => {
@@ -41,7 +43,7 @@ export const BarberService = {
             startTime: { gte: today },
           },
         });
-        return { ...barber, completedToday };
+        return { ...barber, completedToday, totalAppointments: barber._count.appointments };
       })
     );
 
@@ -64,51 +66,29 @@ export const BarberService = {
     const barber = await this.getById(id);
     if (!barber) throw new Error("Barber not found");
 
-    let startTime = new Date();
-    startTime.setDate(startTime.getDate() - 30);
-    startTime.setHours(0, 0, 0, 0);
+    const nowParts = getShopDateString().split("-").map(Number);
+    const selectedMonth = month ?? nowParts[1];
+    const selectedYear = year ?? nowParts[0];
 
-    if (month !== undefined && year !== undefined) {
-      startTime = new Date(year, month - 1, 1);
-      const endTime = new Date(year, month, 0, 23, 59, 59, 999);
-
-      const appointments = await prisma.appointment.findMany({
-        where: {
-          barberId: id,
-          startTime: { gte: startTime, lte: endTime },
-        },
-        include: {
-          customer: true,
-          service: true,
-        },
-        orderBy: { startTime: 'desc' },
-      });
-
-      const statsByDay: Record<string, number> = {};
-      appointments.forEach((app) => {
-        const date = app.startTime.toISOString().split('T')[0];
-        statsByDay[date] = (statsByDay[date] || 0) + 1;
-      });
-
-      return {
-        barber,
-        history: appointments,
-        statsByDay,
-        totalCompleted: appointments.filter(a => a.status === 'COMPLETED').length,
-        totalAppointments: appointments.length,
-        filterActive: true,
-        period: { month, year }
-      };
+    if (selectedMonth < 1 || selectedMonth > 12 || selectedYear < 2000 || selectedYear > 2100) {
+      throw new Error("Periodo inválido");
     }
 
-    startTime = new Date();
-    startTime.setDate(startTime.getDate() - 30);
-    startTime.setHours(0, 0, 0, 0);
+    const startTime = shopDateTime(
+      `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`,
+      "00:00"
+    );
+    const nextMonth = selectedMonth === 12 ? 1 : selectedMonth + 1;
+    const nextMonthYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear;
+    const endTime = shopDateTime(
+      `${nextMonthYear}-${String(nextMonth).padStart(2, "0")}-01`,
+      "00:00"
+    );
 
     const appointments = await prisma.appointment.findMany({
       where: {
         barberId: id,
-        startTime: { gte: startTime },
+        startTime: { gte: startTime, lt: endTime },
       },
       include: {
         customer: true,
@@ -118,18 +98,40 @@ export const BarberService = {
     });
 
     const statsByDay: Record<string, number> = {};
-    appointments.forEach((app) => {
-      const date = app.startTime.toISOString().split('T')[0];
+    const completedAppointments = appointments.filter((appointment) => appointment.status === "COMPLETED");
+
+    completedAppointments.forEach((app) => {
+      const date = getShopDateString(app.startTime);
       statsByDay[date] = (statsByDay[date] || 0) + 1;
     });
+
+    const servicesMap = new Map<string, { serviceId: string; title: string; count: number }>();
+    completedAppointments.forEach((appointment) => {
+      const current = servicesMap.get(appointment.serviceId);
+      servicesMap.set(appointment.serviceId, {
+        serviceId: appointment.serviceId,
+        title: appointment.service.title,
+        count: (current?.count ?? 0) + 1,
+      });
+    });
+
+    const services = Array.from(servicesMap.values())
+      .map((service) => ({
+        ...service,
+        percentage: completedAppointments.length > 0
+          ? Math.round((service.count / completedAppointments.length) * 100)
+          : 0,
+      }))
+      .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title));
 
     return {
       barber,
       history: appointments,
       statsByDay,
-      totalCompleted: appointments.filter(a => a.status === 'COMPLETED').length,
+      services,
+      totalCompleted: completedAppointments.length,
       totalAppointments: appointments.length,
-      filterActive: false,
+      period: { month: selectedMonth, year: selectedYear },
     };
   },
 
@@ -148,6 +150,10 @@ export const BarberService = {
    * Deletes a barber.
    */
   async delete(id: string) {
+    const appointmentCount = await prisma.appointment.count({ where: { barberId: id } });
+    if (appointmentCount > 0) {
+      throw new Error("No se puede eliminar este barbero porque tiene turnos registrados. Podés desactivarlo para conservar el historial.");
+    }
     return await prisma.barber.delete({
       where: { id },
     });

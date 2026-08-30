@@ -1,0 +1,23 @@
+
+> sr-bigote@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 2.5s
+ ✓ Compiled /middleware in 492ms (74 modules)
+ ○ Compiling /admin/login ...
+ ✓ Compiled /admin/login in 3.6s (574 modules)
+ GET /admin/login 200 in 3986ms
+ ✓ Compiled in 390ms (287 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 3.5s (1315 modules)
+ ✓ Compiled in 757ms (663 modules)
+ GET / 200 in 4329ms
+ ✓ Compiled /_not-found in 209ms (1304 modules)
+ GET /_next/static/css/app/layout.css?v=1788112866556 404 in 298ms
+ GET /_next/static/chunks/main-app.js?v=1788112866556 404 in 262ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 27ms

@@ -3,6 +3,7 @@ import { AppointmentSchema } from "@/lib/validations";
 import { CustomerService } from "./customer.service";
 import { Prisma } from "@prisma/client";
 import { getShopDateString, getShopDayBounds, shopDateTime } from "@/lib/datetime";
+import { AppError } from "@/lib/app-error";
 
 export const AppointmentService = {
   /**
@@ -41,6 +42,7 @@ export const AppointmentService = {
           const customer = await CustomerService.create({
             name: data.customerName,
             phone: data.customerPhone,
+            email: data.customerEmail || undefined,
           });
           customerId = customer.id;
         } else {
@@ -60,26 +62,34 @@ export const AppointmentService = {
         where: { id: validated.serviceId },
       });
 
-
-      if (!service) {
-        throw new Error("El servicio seleccionado no existe");
-      }
+      if (!service || !service.isActive) throw new AppError("El servicio seleccionado ya no está disponible.", 409, "SERVICE_UNAVAILABLE");
+      const selectedBarber = await prisma.barber.findUnique({ where: { id: validated.barberId }, select: { isActive: true } });
+      if (!selectedBarber?.isActive) throw new AppError("El barbero seleccionado ya no está disponible para nuevas reservas.", 409, "BARBER_UNAVAILABLE");
 
       const startTime = new Date(validated.startTime);
+      if (Number.isNaN(startTime.getTime())) throw new AppError("La fecha seleccionada no es válida.", 400, "INVALID_DATE");
+      if (startTime <= new Date()) throw new AppError("Ese horario ya pasó. Elegí una fecha y hora futuras.", 409, "PAST_SLOT");
       const duration = service.duration;
       const endTime = new Date(startTime.getTime() + duration * 60000);
 
-      const isAvailable = await this.checkAvailability(validated.barberId, startTime, duration);
+      return await prisma.$transaction(async (tx) => {
+        // Serialize confirmations for the same barber and start time. A second
+        // request waits, then recalculates availability with the latest data.
+        const lockKey = `${validated.barberId}:${startTime.toISOString()}`;
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
-      if (!isAvailable) {
-        throw new Error("El barbero ya tiene un turno programado en este horario");
-      }
+        const availableSlots = await this.getAvailableSlots(
+          validated.barberId,
+          getShopDateString(startTime),
+          duration,
+          validated.serviceId
+        );
+        const isAvailable = availableSlots.some((slot) => slot.startTime.getTime() === startTime.getTime());
+        if (!isAvailable) {
+          throw new AppError("Ese horario acaba de dejar de estar disponible. Elegí otro para continuar.", 409, "SLOT_UNAVAILABLE");
+        }
 
-      return await prisma.appointment.create({
-        data: {
-          ...validated,
-          endTime,
-        },
+        return tx.appointment.create({ data: { ...validated, endTime } });
       });
     } catch (error: any) {
       console.error("Error in AppointmentService.create:", error);
@@ -175,8 +185,13 @@ export const AppointmentService = {
   async getAdminStats() {
     const now = new Date();
     const { start: startOfToday, end: endOfToday } = getShopDayBounds(getShopDateString(now));
+    const [shopYear, shopMonth] = getShopDateString(now).split("-").map(Number);
+    const monthStart = shopDateTime(`${shopYear}-${String(shopMonth).padStart(2, "0")}-01`, "00:00");
+    const nextMonthYear = shopMonth === 12 ? shopYear + 1 : shopYear;
+    const nextMonth = shopMonth === 12 ? 1 : shopMonth + 1;
+    const nextMonthStart = shopDateTime(`${nextMonthYear}-${String(nextMonth).padStart(2, "0")}-01`, "00:00");
 
-    const [total, today, completedAppointments, activeBarbers, offeredServices] = await Promise.all([
+    const [total, today, completedAppointments, completedThisMonth, activeBarbers, offeredServices] = await Promise.all([
       prisma.appointment.count(),
       prisma.appointment.count({
         where: {
@@ -188,7 +203,13 @@ export const AppointmentService = {
         where: { status: "COMPLETED" },
         include: { service: true },
       }),
-      prisma.barber.count(),
+      prisma.appointment.count({
+        where: {
+          status: "COMPLETED",
+          startTime: { gte: monthStart, lt: nextMonthStart },
+        },
+      }),
+      prisma.barber.count({ where: { isActive: true } }),
       prisma.service.count(),
     ]);
 
@@ -224,6 +245,7 @@ export const AppointmentService = {
         totalAppointments: total,
         todayAppointments: today,
         totalRevenue,
+        completedThisMonth,
         completionRate: total > 0 ? (completedAppointments.length / total) * 100 : 0,
         activeBarbers,
         offeredServices,
@@ -233,12 +255,53 @@ export const AppointmentService = {
   },
 
   /**
-   * Generates available time slots for a barber on a specific date.
-   * Assumes shop hours 08:00 - 20:00.
+   * Generates available time slots from the shop, barber and calendar rules.
    */
-  async getAvailableSlots(barberId: string, dateString: string, durationMinutes: number = 30) {
-    const dayStart = shopDateTime(dateString, "08:00");
-    const dayEnd = shopDateTime(dateString, "20:00");
+  async getAvailableSlots(barberId: string, dateString: string, durationMinutes: number = 30, serviceId?: string) {
+    const shopDate = shopDateTime(dateString, "12:00");
+    const dayOfWeek = shopDate.getUTCDay();
+    const settings = await prisma.shopSettings.findFirst({
+      include: { businessHours: { where: { dayOfWeek } } },
+    });
+    const barber = await prisma.barber.findUnique({
+      where: { id: barberId },
+      include: {
+        availability: { where: { dayOfWeek } },
+        breaks: { where: { dayOfWeek } },
+        services: true,
+      },
+    });
+    if (!barber) return [];
+    if (!barber.isActive) return [];
+
+    if (serviceId && barber.servicesConfigured && !barber.services.some((item) => item.serviceId === serviceId)) return [];
+
+    const shopHours = settings?.businessHours[0];
+    const barberHours = barber.availability[0];
+    const isWorking = barberHours ? barberHours.isWorking : (shopHours?.isOpen ?? dayOfWeek !== 0);
+    if (!isWorking) return [];
+
+    const startClock = barberHours?.startTime ?? shopHours?.startTime ?? "08:00";
+    const endClock = barberHours?.endTime ?? shopHours?.endTime ?? "20:00";
+    const dayStart = shopDateTime(dateString, startClock);
+    const dayEnd = shopDateTime(dateString, endClock);
+    const bufferMinutes = settings?.bufferMinutes ?? 0;
+
+    const blocks = await prisma.scheduleBlock.findMany({
+      where: {
+        startDate: { lte: dateString },
+        endDate: { gte: dateString },
+        OR: [{ barberId: null }, { barberId }],
+      },
+    });
+    if (blocks.some((block) => block.allDay)) return [];
+
+    const unavailableRanges = [
+      ...barber.breaks.map((item) => ({ start: shopDateTime(dateString, item.startTime), end: shopDateTime(dateString, item.endTime) })),
+      ...blocks
+        .filter((block) => !block.allDay && block.startTime && block.endTime)
+        .map((block) => ({ start: shopDateTime(dateString, block.startTime!), end: shopDateTime(dateString, block.endTime!) })),
+    ];
 
     const appointments = await prisma.appointment.findMany({
       where: {
@@ -259,11 +322,13 @@ export const AppointmentService = {
 
       if (slotEndTime > dayEnd) break;
 
-      const isOverlap = appointments.some(
-        app => app.startTime < slotEndTime && app.endTime > currentSlot
+      const isOverlap = appointments.some((app) =>
+        currentSlot < new Date(app.endTime.getTime() + bufferMinutes * 60000) &&
+        new Date(slotEndTime.getTime() + bufferMinutes * 60000) > app.startTime
       );
+      const crossesBlockedRange = unavailableRanges.some((range) => currentSlot < range.end && slotEndTime > range.start);
 
-      if (!isOverlap) {
+      if (!isOverlap && !crossesBlockedRange && currentSlot >= new Date()) {
         slots.push({
           startTime: new Date(currentSlot),
           endTime: slotEndTime,

@@ -6,23 +6,23 @@ import { Calendar, User, CheckCircle, Clock } from "lucide-react";
 
 const steps = [
   {
-    title: "Elige tu servicio",
-    description: "Selecciona el servicio que mejor te parezca.",
+    title: "Elegí el servicio",
+    description: "Revisá el precio y la duración antes de continuar.",
     icon: User,
   },
   {
-    title: "Selecciona tu barbero",
-    description: "Elige a uno de nuestros expertos o deja que nosotros asignemos al mejor para ti.",
+    title: "Elegí tu barbero",
+    description: "Reservá con tu barbero habitual o conocé la especialidad de cada uno.",
     icon: Calendar,
   },
   {
-    title: "Define tu horario",
-    description: "Encuentra la fecha y hora que mejor encaje con tu agenda mediante nuestro sistema.",
+    title: "Buscá un horario",
+    description: "Vas a ver únicamente los turnos que están disponibles.",
     icon: Clock,
   },
   {
-    title: "Confirma tu cita",
-    description: "Recibe una confirmación instantánea y prepárate para una experiencia de lujo.",
+    title: "Confirmá la reserva",
+    description: "Dejanos tus datos y el turno queda agendado.",
     icon: CheckCircle,
   },
 ];
@@ -38,9 +38,9 @@ export const BookingGuide = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="text-primary font-semibold tracking-widest uppercase text-sm">Proceso Simple</span>
+            <span className="text-primary font-semibold tracking-widest uppercase text-sm">Reserva online</span>
             <h2 className="text-4xl md:text-5xl font-bold text-white mt-4 tracking-tight">
-              Cómo Reservar tu Turno
+              Tu turno, en cuatro pasos
             </h2>
           </motion.div>
         </div>

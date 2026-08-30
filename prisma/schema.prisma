@@ -7,35 +7,107 @@ datasource db {
 }
 
 model ShopSettings {
-  id        String   @id @default(cuid())
-  name      String
-  address   String?
-  phone     String?
-  email     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  address       String?
+  phone         String?
+  email         String?
+  bufferMinutes Int            @default(0)
+  businessHours BusinessHour[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model BusinessHour {
+  id             String       @id @default(cuid())
+  shopSettingsId String
+  dayOfWeek      Int
+  isOpen         Boolean      @default(true)
+  startTime      String       @default("08:00")
+  endTime        String       @default("20:00")
+  shopSettings   ShopSettings @relation(fields: [shopSettingsId], references: [id], onDelete: Cascade)
+
+  @@unique([shopSettingsId, dayOfWeek])
 }
 
 model Barber {
-  id           String        @id @default(cuid())
-  name         String
-  specialty    String
-  experience   Int
-  image        String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  appointments Appointment[]
+  id                 String               @id @default(cuid())
+  name               String
+  specialty          String
+  experience         Int
+  image              String?
+  isActive           Boolean              @default(true)
+  servicesConfigured Boolean              @default(false)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  appointments       Appointment[]
+  availability       BarberAvailability[]
+  breaks             BarberBreak[]
+  services           BarberService[]
+  scheduleBlocks     ScheduleBlock[]
+}
+
+model BarberAvailability {
+  id        String  @id @default(cuid())
+  barberId  String
+  dayOfWeek Int
+  isWorking Boolean @default(true)
+  startTime String  @default("08:00")
+  endTime   String  @default("20:00")
+  barber    Barber  @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([barberId, dayOfWeek])
+}
+
+model BarberBreak {
+  id        String  @id @default(cuid())
+  barberId  String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  label     String?
+  barber    Barber  @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([barberId, dayOfWeek])
 }
 
 model Service {
-  id           String        @id @default(cuid())
+  id           String          @id @default(cuid())
   title        String
   description  String?
   price        Decimal
   duration     Int
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
   appointments Appointment[]
+  barbers      BarberService[]
+}
+
+model BarberService {
+  barberId  String
+  serviceId String
+  barber    Barber  @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([barberId, serviceId])
+}
+
+model ScheduleBlock {
+  id        String            @id @default(cuid())
+  barberId  String?
+  type      ScheduleBlockType
+  label     String
+  startDate String
+  endDate   String
+  allDay    Boolean           @default(true)
+  startTime String?
+  endTime   String?
+  barber    Barber?           @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  createdAt DateTime          @default(now())
+
+  @@index([barberId, startDate, endDate])
+  @@index([startDate, endDate])
 }
 
 model Customer {
@@ -66,9 +138,68 @@ model Appointment {
   @@index([barberId, startTime])
 }
 
+model AdminUser {
+  id           String               @id @default(cuid())
+  username     String               @unique
+  email        String               @unique
+  passwordHash String
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  resetTokens  PasswordResetToken[]
+  auditLogs    AdminAuditLog[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  adminId   String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  admin     AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, expiresAt])
+}
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int      @default(0)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}
+
+model AdminAuditLog {
+  id         String     @id @default(cuid())
+  adminId    String?
+  actor      String
+  action     String
+  entityType String
+  entityId   String?
+  summary    String
+  metadata   Json?
+  ipHash     String?
+  createdAt  DateTime   @default(now())
+  admin      AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+  @@index([adminId, createdAt])
+}
+
 enum AppointmentStatus {
   SCHEDULED
   COMPLETED
   CANCELLED
   NO_SHOW
+}
+
+enum ScheduleBlockType {
+  HOLIDAY
+  VACATION
+  ABSENCE
+  OTHER
 }

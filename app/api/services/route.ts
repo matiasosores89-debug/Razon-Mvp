@@ -4,7 +4,8 @@ import { createSuccessResponse, handleApiError } from "@/lib/api-response";
 
 export async function GET(req: NextRequest) {
   try {
-    const data = await ServiceService.getAll();
+    const barberId = new URL(req.url).searchParams.get("barberId") || undefined;
+    const data = await ServiceService.getAll(barberId);
     return createSuccessResponse(data, "Servicios obtenidos correctamente");
   } catch (error) {
     return handleApiError(error);

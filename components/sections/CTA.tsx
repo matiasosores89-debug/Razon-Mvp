@@ -23,15 +23,15 @@ export const CTA = () => {
           className="max-w-3xl mx-auto"
         >
           <h2 className="text-4xl md:text-6xl font-bold text-white mb-8 tracking-tighter leading-tight">
-            ¿Listo para elevar <br />
-            <span className="text-primary italic">tu estilo?</span>
+            ¿Hace falta un corte? <br />
+            <span className="text-primary italic">Reservá en un minuto.</span>
           </h2>
           <p className="text-muted-foreground text-lg mb-12 max-w-xl mx-auto leading-relaxed">
-            No esperes más para experimentar el mejor servicio de todo tucuman.
+            Mirá los horarios disponibles y elegí el que mejor te quede. Sin llamadas ni mensajes de ida y vuelta.
           </p>
           <Link href="/booking">
             <Button variant="primary" size="lg" className="font-bold px-12 py-6 text-xl rounded-full shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
-              Reservar Turno Ahora
+              Ver horarios disponibles
             </Button>
           </Link>
         </motion.div>

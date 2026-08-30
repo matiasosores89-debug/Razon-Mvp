@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { AppointmentService } from "@/services/appointment.service";
 import { createSuccessResponse, handleApiError } from "@/lib/api-response";
+import { enforceRateLimit, getClientIp, verifyTurnstile } from "@/lib/request-security";
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,6 +21,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const ip = getClientIp(req.headers);
+    await enforceRateLimit({ scope: "public-booking", identifier: ip, limit: 6, windowSeconds: 10 * 60 });
+    await verifyTurnstile(body.turnstileToken, ip, "book_appointment");
+    delete body.turnstileToken;
     const data = await AppointmentService.create(body);
     return createSuccessResponse(data, "Cita creada correctamente", 201);
   } catch (error) {

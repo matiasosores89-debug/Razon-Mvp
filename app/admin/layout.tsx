@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, CalendarDays, Users, Scissors } from "lucide-react";
+import { LayoutDashboard, CalendarDays, CalendarRange, Users, Scissors, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/admin/LogoutButton";
 
@@ -11,13 +11,16 @@ const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Turnos", href: "/admin/appointments", icon: CalendarDays },
   { label: "Barberos", href: "/admin/barbers", icon: Scissors },
+  { label: "Servicios", href: "/admin/services", icon: Scissors },
+  { label: "Disponibilidad", href: "/admin/availability", icon: CalendarRange },
   { label: "Clientes", href: "/admin/customers", icon: Users },
+  { label: "Seguridad", href: "/admin/security", icon: ShieldCheck },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  if (pathname === "/admin/login") return <>{children}</>;
+  if (["/admin/login", "/admin/forgot-password", "/admin/reset-password"].includes(pathname)) return <>{children}</>;
 
   return (
     <div className="min-h-screen bg-luxury-black flex">

@@ -7,16 +7,24 @@ import { BarberSelector } from "./BarberSelector";
 import { ServiceSelector } from "./ServiceSelector";
 import { SlotSelector } from "./SlotSelector";
 import { CustomerForm } from "./CustomerForm";
-import { CheckCircle, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, ArrowLeft, ArrowRight, Loader2, RefreshCw, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getShopDateString, SHOP_TIME_ZONE } from "@/lib/datetime";
+import { Turnstile } from "@/components/security/Turnstile";
 
 type Step = "barber" | "service" | "slot" | "customer" | "confirm" | "success";
+type BookingNotice = { title: string; message: string; code: string; retry?: () => void };
+
+class BookingRequestError extends Error {
+  constructor(message: string, public code: string, public status: number, public details?: Record<string, string[]>) {
+    super(message);
+  }
+}
 
 export const BookingForm = () => {
   const router = useRouter();
+  const submittingRef = React.useRef(false);
   const [step, setStep] = useState<Step>("barber");
-  const [isLoading, setIsLoading] = useState(false);
   const [apiLoading, setApiLoading] = useState({
     barbers: true,
     services: true,
@@ -42,7 +50,9 @@ export const BookingForm = () => {
     slots: [] as any[],
   });
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -55,8 +65,12 @@ export const BookingForm = () => {
       setSelection(prev => ({ ...prev, serviceId }));
     }
     fetchBarbers();
-    fetchServices();
   }, []);
+
+  useEffect(() => {
+    if (!selection.barberId) return;
+    fetchServices(selection.barberId);
+  }, [selection.barberId]);
 
   useEffect(() => {
     if (selection.barberId && selection.date) {
@@ -65,40 +79,61 @@ export const BookingForm = () => {
   }, [selection.barberId, selection.serviceId, selection.date]);
 
   async function fetchBarbers() {
+    setErrors((current) => ({ ...current, booking: undefined }));
     try {
       const res = await fetch("/api/barbers");
       const result = await res.json();
-      if (result.success) setData(prev => ({ ...prev, barbers: result.data }));
+      if (!res.ok || !result.success) throw new Error("No pudimos cargar el equipo.");
+      setData(prev => ({ ...prev, barbers: result.data }));
     } catch (e) {
       console.error("Error fetching barbers", e);
+      setErrors((current) => ({ ...current, booking: { title: "No pudimos cargar los barberos", message: "Revisá tu conexión e intentá nuevamente.", code: "LOAD_BARBERS", retry: fetchBarbers } satisfies BookingNotice }));
     } finally {
       setApiLoading(prev => ({ ...prev, barbers: false }));
     }
   }
 
-  async function fetchServices() {
+  async function fetchServices(barberId: string) {
+    setErrors((current) => ({ ...current, booking: undefined }));
+    setApiLoading(prev => ({ ...prev, services: true }));
     try {
-      const res = await fetch("/api/services");
+      const res = await fetch(`/api/services?barberId=${encodeURIComponent(barberId)}`);
       const result = await res.json();
-      if (result.success) setData(prev => ({ ...prev, services: result.data }));
+      if (!res.ok || !result.success) throw new Error("No pudimos cargar los servicios.");
+      if (result.success) {
+        setData(prev => ({ ...prev, services: result.data }));
+        setSelection(prev => result.data.some((service: { id: string }) => service.id === prev.serviceId)
+          ? prev
+          : { ...prev, serviceId: null, slot: null });
+      }
     } catch (e) {
       console.error("Error fetching services", e);
+      setErrors((current) => ({ ...current, booking: { title: "No pudimos cargar los servicios", message: "Intentá nuevamente antes de continuar.", code: "LOAD_SERVICES", retry: () => fetchServices(barberId) } satisfies BookingNotice }));
     } finally {
       setApiLoading(prev => ({ ...prev, services: false }));
     }
   }
 
   async function fetchSlots() {
+    setErrors((current) => ({ ...current, booking: undefined }));
     setApiLoading(prev => ({ ...prev, slots: true }));
     try {
       const service = data.services.find(s => s.id === selection.serviceId);
       const duration = service ? service.duration : 30;
 
-      const res = await fetch(`/api/appointments/availability?barberId=${selection.barberId}&date=${selection.date}&duration=${duration}`);
+      const params = new URLSearchParams({
+        barberId: selection.barberId!,
+        date: selection.date,
+        duration: String(duration),
+      });
+      if (selection.serviceId) params.set("serviceId", selection.serviceId);
+      const res = await fetch(`/api/appointments/availability?${params.toString()}`);
       const result = await res.json();
-      if (result.success) setData(prev => ({ ...prev, slots: result.data }));
+      if (!res.ok || !result.success) throw new Error("No pudimos consultar los horarios.");
+      setData(prev => ({ ...prev, slots: result.data }));
     } catch (e) {
       console.error("Error fetching slots", e);
+      setErrors((current) => ({ ...current, booking: { title: "No pudimos cargar los horarios", message: "Revisá tu conexión y volvé a intentarlo.", code: "LOAD_SLOTS", retry: fetchSlots } satisfies BookingNotice }));
     } finally {
       setApiLoading(prev => ({ ...prev, slots: false }));
     }
@@ -111,6 +146,8 @@ export const BookingForm = () => {
     }));
   };
 
+  const clearBookingError = () => setErrors((current) => ({ ...current, booking: undefined }));
+
   async function handleSubmit() {
     // Final validation check
     const { name, phone } = selection.customer;
@@ -119,6 +156,16 @@ export const BookingForm = () => {
       setStep("customer");
       return;
     }
+    if (!selection.barberId || !selection.serviceId || !selection.slot) {
+      setErrors({ booking: { title: "Falta información de la reserva", message: "Volvé a seleccionar el barbero, el servicio y el horario.", code: "INCOMPLETE_BOOKING" } satisfies BookingNotice });
+      return;
+    }
+    if (!turnstileToken) {
+      setErrors({ booking: { title: "Falta la verificación de seguridad", message: "Completá el control anti-spam para confirmar el turno.", code: "CAPTCHA_REQUIRED" } satisfies BookingNotice });
+      return;
+    }
+    if (submittingRef.current) return;
+    submittingRef.current = true;
 
     setApiLoading(prev => ({ ...prev, submit: true }));
     setErrors({});
@@ -132,32 +179,62 @@ export const BookingForm = () => {
           serviceId: selection.serviceId,
           // The selected slot is already an absolute ISO instant from the API.
           startTime: selection.slot,
-          customerId: await createCustomer(),
+          customerName: selection.customer.name,
+          customerPhone: selection.customer.phone,
+          customerEmail: selection.customer.email,
+          turnstileToken,
         }),
       });
 
-      const result = await res.json();
-      if (result.success) {
+      const result = await res.json().catch(() => null);
+      if (res.ok && result?.success) {
         setStep("success");
       } else {
-        throw new Error(result.message || "Error creating appointment");
+        throw new BookingRequestError(result?.error?.message || "No pudimos confirmar el turno.", result?.error?.code || "BOOKING_FAILED", res.status, result?.error?.details);
       }
-    } catch (e: any) {
-      setErrors({ form: e.message });
+    } catch (error) {
+      const requestError = error instanceof BookingRequestError ? error : null;
+      if (requestError?.code === "SLOT_UNAVAILABLE" || requestError?.code === "PAST_SLOT") {
+        setSelection((current) => ({ ...current, slot: null }));
+        setStep("slot");
+        await fetchSlots();
+        setErrors({ booking: {
+          title: requestError.code === "PAST_SLOT" ? "Ese horario ya pasó" : "Ese horario acaba de ocuparse",
+          message: requestError.code === "PAST_SLOT" ? "Elegí un nuevo horario para continuar con la reserva." : "Otra persona lo confirmó antes. Ya actualizamos los horarios disponibles para que elijas otro.",
+          code: requestError.code,
+        } satisfies BookingNotice });
+      } else if (requestError?.code === "SERVICE_UNAVAILABLE") {
+        setSelection((current) => ({ ...current, serviceId: null, slot: null }));
+        setStep("service");
+        if (selection.barberId) await fetchServices(selection.barberId);
+        setErrors({ booking: { title: "El servicio ya no está disponible", message: "Elegí otro servicio para continuar.", code: requestError.code } satisfies BookingNotice });
+      } else if (requestError?.code === "BARBER_UNAVAILABLE") {
+        setSelection((current) => ({ ...current, barberId: null, serviceId: null, slot: null }));
+        setStep("barber");
+        await fetchBarbers();
+        setErrors({ booking: { title: "El barbero ya no está disponible", message: "Elegí otro integrante del equipo para continuar.", code: requestError.code } satisfies BookingNotice });
+      } else if (requestError?.code === "VALIDATION_ERROR" || requestError?.code === "CUSTOMER_ERROR") {
+        const fieldErrors = requestError.details ?? {};
+        setStep("customer");
+        setErrors({
+          name: fieldErrors.name?.[0],
+          phone: fieldErrors.phone?.[0],
+          email: fieldErrors.email?.[0],
+          booking: { title: "Revisá tus datos", message: "Hay información incompleta o con un formato incorrecto.", code: requestError.code } satisfies BookingNotice,
+        });
+      } else if (error instanceof TypeError) {
+        setErrors({ booking: { title: "No pudimos conectarnos", message: "Revisá tu conexión. Tus datos siguen guardados y podés volver a intentar.", code: "NETWORK_ERROR", retry: handleSubmit } satisfies BookingNotice });
+      } else {
+        if (requestError?.code === "CAPTCHA_INVALID" || requestError?.code === "CAPTCHA_REQUIRED") {
+          setTurnstileToken("");
+          setTurnstileReset((value) => value + 1);
+        }
+        setErrors({ booking: { title: "No pudimos confirmar el turno", message: requestError?.message || "Ocurrió un problema inesperado. Tus datos siguen guardados.", code: requestError?.code || "UNKNOWN_ERROR", retry: handleSubmit } satisfies BookingNotice });
+      }
     } finally {
+      submittingRef.current = false;
       setApiLoading(prev => ({ ...prev, submit: false }));
     }
-  }
-
-  async function createCustomer() {
-    const res = await fetch("/api/customers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(selection.customer),
-    });
-    const result = await res.json();
-    if (!result.success) throw new Error("Error creating customer");
-    return result.data.id;
   }
 
   const nextStep = () => {
@@ -165,7 +242,7 @@ export const BookingForm = () => {
     else if (step === "service") setStep("slot");
     else if (step === "slot") setStep("customer");
     else if (step === "customer") {
-      const { name, phone } = selection.customer;
+      const { name, phone, email } = selection.customer;
       const newErrors: any = {};
 
       if (!name || name.trim().length < 2) {
@@ -173,6 +250,9 @@ export const BookingForm = () => {
       }
       if (!phone || phone.trim().length < 7) {
         newErrors.phone = "Por favor, ingresa un teléfono válido";
+      }
+      if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+        newErrors.email = "Ingresá un email válido o dejá el campo vacío";
       }
 
       if (Object.keys(newErrors).length > 0) {
@@ -219,6 +299,7 @@ export const BookingForm = () => {
       </div>
 
       <div className="bg-white/5 border border-white/10 rounded-3xl p-8 relative overflow-hidden">
+        {errors.booking && <BookingErrorNotice notice={errors.booking as BookingNotice} />}
         <AnimatePresence mode="wait">
           {step === "barber" && (
             <motion.div
@@ -235,7 +316,7 @@ export const BookingForm = () => {
               <BarberSelector
                 barbers={data.barbers}
                 selectedBarberId={selection.barberId}
-                onSelect={(id) => setSelection(prev => ({ ...prev, barberId: id }))}
+                onSelect={(id) => { clearBookingError(); setSelection(prev => ({ ...prev, barberId: id })); }}
                 isLoading={apiLoading.barbers}
               />
               <div className="flex justify-end">
@@ -266,7 +347,7 @@ export const BookingForm = () => {
               <ServiceSelector
                 services={data.services}
                 selectedServiceId={selection.serviceId}
-                onSelect={(id) => setSelection(prev => ({ ...prev, serviceId: id }))}
+                onSelect={(id) => { clearBookingError(); setSelection(prev => ({ ...prev, serviceId: id })); }}
                 isLoading={apiLoading.services}
               />
               <div className="flex justify-between">
@@ -299,10 +380,10 @@ export const BookingForm = () => {
               </div>
               <SlotSelector
                 selectedDate={selection.date}
-                setSelectedDate={(date) => setSelection(prev => ({ ...prev, date, slot: null }))}
+                setSelectedDate={(date) => { clearBookingError(); setSelection(prev => ({ ...prev, date, slot: null })); }}
                 slots={data.slots}
                 selectedSlot={selection.slot}
-                onSelectSlot={(slot) => setSelection(prev => ({ ...prev, slot }))}
+                onSelectSlot={(slot) => { clearBookingError(); setSelection(prev => ({ ...prev, slot })); }}
                 isLoading={apiLoading.slots}
               />
               <div className="flex justify-between">
@@ -395,11 +476,9 @@ export const BookingForm = () => {
                 </div>
               </div>
 
-              {errors.form && (
-                <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm text-center">
-                  {errors.form}
-                </div>
-              )}
+              <div className={`rounded-xl border px-4 py-3 transition-colors ${turnstileToken ? "border-emerald-400/20 bg-emerald-400/[0.05]" : "border-white/10 bg-black/15"}`}>
+                <Turnstile action="book_appointment" onVerify={setTurnstileToken} resetKey={turnstileReset} />
+              </div>
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={prevStep} className="text-white border-white/10 hover:bg-white/10">
@@ -408,8 +487,9 @@ export const BookingForm = () => {
                 <Button
                   variant="primary"
                   onClick={handleSubmit}
-                  disabled={apiLoading.submit}
+                  disabled={apiLoading.submit || !turnstileToken}
                   className="px-8 relative"
+                  aria-describedby={!turnstileToken ? "booking-security-help" : undefined}
                 >
                   {apiLoading.submit ? (
                     <Loader2 size={18} className="animate-spin" />
@@ -418,6 +498,7 @@ export const BookingForm = () => {
                   )}
                 </Button>
               </div>
+              {!turnstileToken && <p id="booking-security-help" className="text-right text-xs text-zinc-500">El botón se habilita cuando finaliza la verificación.</p>}
             </motion.div>
           )}
 
@@ -451,3 +532,16 @@ export const BookingForm = () => {
     </div>
   );
 };
+
+function BookingErrorNotice({ notice }: { notice: BookingNotice }) {
+  const isNetwork = notice.code === "NETWORK_ERROR" || notice.code.startsWith("LOAD_");
+  return (
+    <div role="alert" aria-live="assertive" className="mb-6 flex flex-col gap-4 rounded-2xl border border-amber-500/25 bg-amber-500/[0.07] p-4 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-1 gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">{isNetwork ? <WifiOff size={18} /> : <AlertTriangle size={18} />}</span>
+        <div className="min-w-0"><p className="text-sm font-semibold text-white">{notice.title}</p><p className="mt-1 text-sm leading-5 text-zinc-400">{notice.message}</p></div>
+      </div>
+      {notice.retry && <button type="button" onClick={notice.retry} className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-amber-500/20 px-3 text-sm font-medium text-amber-300 transition-colors hover:bg-amber-500/10"><RefreshCw size={14} /> Reintentar</button>}
+    </div>
+  );
+}

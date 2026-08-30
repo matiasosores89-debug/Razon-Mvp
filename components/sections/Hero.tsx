@@ -17,7 +17,7 @@ export const Hero = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-luxury-black/60 via-luxury-black/40 to-luxury-black z-10" />
         <img
           src="/background2.jpg"
-          alt="Luxury Barbershop Interior"
+          alt="Interior de la barbería Sr. Bigote"
           className="w-full h-full object-cover"
         />
       </div>
@@ -30,8 +30,8 @@ export const Hero = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-white mb-6 leading-tight">
-            EL ARTE DE LA <br />
-            <span className="text-primary italic">PERFECCIÓN</span>
+            UN BUEN CORTE <br />
+            <span className="text-primary italic">CAMBIA TODO</span>
           </h1>
 
           <motion.p
@@ -40,7 +40,7 @@ export const Hero = () => {
             transition={{ delay: 0.3, duration: 0.8 }}
             className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Más que un corte, una experiencia de lujo. Redefiniendo el estilo masculino con precisión artesanal y elegancia minimalista.
+            Corte, barba y asesoramiento para que salgas como querías. Elegí tu barbero, reservá online y vení a la hora que te quede cómoda.
           </motion.p>
 
           <motion.div
@@ -50,10 +50,10 @@ export const Hero = () => {
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Button asChild variant="primary" size="lg" className="w-full sm:w-auto font-bold px-10">
-              <Link href="/booking">Reservar Turno</Link>
+              <Link href="/booking">Reservar turno</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto border-white text-white hover:bg-white/10 px-10">
-              <Link href="#about">Conocer la Barbería</Link>
+              <Link href="#about">Conocer la barbería</Link>
             </Button>
           </motion.div>
         </motion.div>

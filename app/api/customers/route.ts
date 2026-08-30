@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { CustomerService } from "@/services/customer.service";
 import { createSuccessResponse, handleApiError } from "@/lib/api-response";
+import { enforceRateLimit, getClientIp } from "@/lib/request-security";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,6 +14,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    await enforceRateLimit({ scope: "public-customer", identifier: getClientIp(req.headers), limit: 8, windowSeconds: 10 * 60 });
     const body = await req.json();
     const data = await CustomerService.create(body);
     return createSuccessResponse(data, "Cliente creado correctamente", 201);
