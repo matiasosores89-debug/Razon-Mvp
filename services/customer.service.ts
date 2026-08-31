@@ -10,7 +10,7 @@ export const CustomerService = {
     const validated = CustomerSchema.parse(data);
     return await prisma.$transaction(async (tx) => {
       // Prevent simultaneous bookings for the same phone from creating duplicates.
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${validated.phone}))`;
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${validated.phone}))`;
 
       // Normalize while comparing so records saved before this fix are reused too.
       const customers = await tx.customer.findMany({

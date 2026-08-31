@@ -10,7 +10,7 @@ export async function verifyAdminCredentials(username: string, password: string)
   // Backwards-compatible bootstrap: the existing environment credential is
   // persisted once, so future password changes survive deploys and restarts.
   if (!admin && username === (process.env.ADMIN_USERNAME ?? "Admin")) {
-    const passwordHash = process.env.ADMIN_PASSWORD_HASH;
+    const passwordHash = process.env.ADMIN_PASSWORD_HASH?.trim();
     const email = process.env.ADMIN_EMAIL ?? "admin@razor.local";
     if (!passwordHash) throw new Error("Falta configurar ADMIN_PASSWORD_HASH");
     if (!verifyPassword(password, passwordHash)) return null;

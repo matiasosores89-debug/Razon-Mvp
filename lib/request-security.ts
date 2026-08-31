@@ -24,7 +24,10 @@ export async function enforceRateLimit(input: {
   const resetAt = new Date(now.getTime() + input.windowSeconds * 1000);
 
   const bucket = await prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
+    // This is a SELECT that returns a row. $executeRaw is only reliable for
+    // statements that return an affected-row count and fails with some hosted
+    // PostgreSQL adapters (including pooled Neon connections).
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
     const current = await tx.rateLimitBucket.findUnique({ where: { key } });
     if (!current || current.resetAt <= now) {
       return tx.rateLimitBucket.upsert({
