@@ -27,7 +27,7 @@ export async function enforceRateLimit(input: {
     // This is a SELECT that returns a row. $executeRaw is only reliable for
     // statements that return an affected-row count and fails with some hosted
     // PostgreSQL adapters (including pooled Neon connections).
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))::text AS lock_acquired`;
     const current = await tx.rateLimitBucket.findUnique({ where: { key } });
     if (!current || current.resetAt <= now) {
       return tx.rateLimitBucket.upsert({

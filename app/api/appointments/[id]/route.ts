@@ -4,10 +4,10 @@ import { createSuccessResponse, handleApiError } from "@/lib/api-response";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const data = await AppointmentService.getById(id);
     if (!data) {
       return handleApiError(new Error("Cita no encontrada"));
@@ -20,10 +20,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
 
     if (body.status) {
@@ -39,10 +39,10 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     await AppointmentService.updateStatus(id, "CANCELLED");
     return createSuccessResponse(null, "Cita cancelada correctamente");
   } catch (error) {

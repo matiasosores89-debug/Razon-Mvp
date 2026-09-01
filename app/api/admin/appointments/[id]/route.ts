@@ -5,10 +5,10 @@ import { recordAdminAction } from "@/lib/audit";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
 
     if (body.status && Object.keys(body).length === 1) {
@@ -27,10 +27,10 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     await AppointmentService.delete(id);
     await recordAdminAction(req, { action: "DELETE", entityType: "APPOINTMENT", entityId: id, summary: "Turno eliminado" });
     return createSuccessResponse({ success: true }, "Turno eliminado correctamente");

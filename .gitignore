@@ -4,3 +4,6 @@
 .next/
 node_modules/
 npm-debug.log*
+*.tsbuildinfo
+dev-*.log
+.next-*/

@@ -4,10 +4,10 @@ import { createSuccessResponse, handleApiError } from "@/lib/api-response";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const data = await BarberService.getById(id);
     if (!data) {
       return handleApiError(new Error("Barbero no encontrado"));
@@ -20,10 +20,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     const data = await BarberService.update(id, body);
     return createSuccessResponse(data, "Barbero actualizado correctamente");
@@ -34,10 +34,10 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     await BarberService.delete(id);
     return createSuccessResponse(null, "Barbero eliminado correctamente");
   } catch (error) {
